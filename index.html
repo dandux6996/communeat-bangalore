@@ -1,75 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Communeat Bangalore</title>
-  <meta name="description" content="Communeat – Discover restaurants in Bangalore." />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Communeat Bangalore - API Test</title>
   <style>
     body { margin: 0; font-family: Arial, sans-serif; background: #fafafa; color: #333; }
     header { background: #d62828; color: #fff; text-align: center; padding: 2rem 1rem; }
     header h1 { margin: 0; font-size: 2.5rem; }
     header p { margin: 0.5rem 0 1.5rem; font-size: 1.1rem; }
-    #results { max-width: 800px; margin: 0 auto; padding: 1rem; }
-    .restaurant { background: #fff; margin-bottom: 1rem; padding: 1rem; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .restaurant h3 { margin: 0 0 0.5rem; color: #d62828; }
-    .restaurant p { margin: 0.25rem 0; }
+    #results { max-width: 800px; margin: 2rem auto; padding: 1rem; text-align: center; }
   </style>
-  <!-- Load the Maps JS API with Places library and callback -->
+  <!-- Load Google Maps JS API with Places library and callback -->
   <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDfZl2qxFBhNwmlS2CORhDDm6_4YqI2DPA&libraries=places&callback=initPlaces">
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&callback=initPlaces">
   </script>
 </head>
 <body>
   <header>
     <h1>Communeat Bangalore</h1>
-    <p>Discover flavor. Share belonging.</p>
+    <p>API Connectivity Test</p>
   </header>
 
   <div id="results">
-    <p>Loading nearby restaurants...</p>
+    <p>Waiting for API response...</p>
   </div>
 
   <script>
     function initPlaces() {
-      const bangalore = new google.maps.LatLng(12.9716, 77.5946);
+      // Confirm that the API script has loaded
+      alert('Google Maps Places API loaded successfully.');
+      // Create a dummy service to test connectivity
       const service = new google.maps.places.PlacesService(document.createElement('div'));
       service.nearbySearch({
-        location: bangalore,
-        radius: 5000,
+        location: { lat: 12.9716, lng: 77.5946 },
+        radius: 100,
         type: ['restaurant']
-      }, displayResults);
-    }
-
-    function displayResults(results, status) {
-      const container = document.getElementById('results');
-      container.innerHTML = '';
-      if (status === google.maps.places.PlacesServiceStatus.OK) {
-        results.forEach(place => {
-          const card = document.createElement('div');
-          card.className = 'restaurant';
-
-          const name = document.createElement('h3');
-          name.textContent = place.name;
-          card.appendChild(name);
-
-          if (place.vicinity) {
-            const addr = document.createElement('p');
-            addr.textContent = place.vicinity;
-            card.appendChild(addr);
-          }
-
-          if (place.rating) {
-            const rating = document.createElement('p');
-            rating.textContent = 'Rating: ' + place.rating + ' ★';
-            card.appendChild(rating);
-          }
-
-          container.appendChild(card);
-        });
-      } else {
-        container.textContent = 'No results found.';
-      }
+      }, (results, status) => {
+        const container = document.getElementById('results');
+        container.innerHTML = '';
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+          alert('NearbySearch request succeeded. API is working.');
+          container.textContent = 'API is working: found ' + results.length + ' restaurant result(s).';
+        } else {
+          alert('NearbySearch request failed with status: ' + status);
+          container.textContent = 'API test failed: ' + status;
+        }
+      });
     }
   </script>
 </body>

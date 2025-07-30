@@ -11,6 +11,14 @@
     header p { margin: 0.5rem 0 1.5rem; font-size: 1.1rem; }
     #results { max-width: 800px; margin: 2rem auto; padding: 1rem; text-align: center; }
   </style>
+  <!-- Define a failure callback for authentication errors -->
+  <script>
+    window.gm_authFailure = function() {
+      const container = document.getElementById('results');
+      alert('Google Maps API authentication failed. Please check your API key.');
+      if (container) container.textContent = 'API test failed: Authentication error';
+    };
+  </script>
   <!-- Load Google Maps JS API with Places library and callback -->
   <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDfZl2qxFBhNwmlS2CORhDDm6_4YqI2DPA&libraries=places&callback=initPlaces">
@@ -28,8 +36,8 @@
 
   <script>
     function initPlaces() {
-      // Confirm that the API script has loaded
-      alert('Google Maps Places API loaded successfully.');
+      // Confirm that the API script has loaded without auth errors
+      console.log('Google Maps Places API loaded.');
       // Create a dummy service to test connectivity
       const service = new google.maps.places.PlacesService(document.createElement('div'));
       service.nearbySearch({
@@ -42,6 +50,9 @@
         if (status === google.maps.places.PlacesServiceStatus.OK) {
           alert('NearbySearch request succeeded. API is working.');
           container.textContent = 'API is working: found ' + results.length + ' restaurant result(s).';
+        } else if (status === google.maps.places.PlacesServiceStatus.REQUEST_DENIED) {
+          alert('NearbySearch request denied. Likely invalid API key.');
+          container.textContent = 'API test failed: Request denied (check API key)';
         } else {
           alert('NearbySearch request failed with status: ' + status);
           container.textContent = 'API test failed: ' + status;

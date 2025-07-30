@@ -45,7 +45,7 @@
     .error { grid-column: 1 / -1; color: red; text-align: center; }
   </style>
   <script>
-    // Authentication failure handler
+    // Handle authentication errors
     window.gm_authFailure = function() {
       displayError('Authentication error: check your API key.');
     };
@@ -55,10 +55,8 @@
     }
     let selectedLocation = null;
     function init() {
-      // Initialize Geocoder and PlacesService
       window.geocoder = new google.maps.Geocoder();
       window.service = new google.maps.places.PlacesService(document.createElement('div'));
-      // Set up Autocomplete for input suggestions
       const inputElem = document.getElementById('location');
       const autocomplete = new google.maps.places.Autocomplete(inputElem, {
         types: ['(regions)'],
@@ -74,21 +72,37 @@
     }
     function searchByLocation() {
       const input = document.getElementById('location').value.trim();
-      if (!input) { displayError('Please enter a pincode or locality.'); return; }
-      displayError('Searching for restaurants...');
-      // If user selected from autocomplete, use that location directly
-      if (selectedLocation) {
+      const pinRegex = /^\d{6}$/;
+      if (!input) {
+        displayError('Please enter a Bangalore pincode or locality.');
+        return;
+      }
+      // Determine if input is pincode or autocomplete locality
+      if (pinRegex.test(input)) {
+        // Validate pincode via geocoding
+        geocodeAndSearch(input + ', Bangalore, India');
+      } else if (selectedLocation) {
+        // Autocomplete selection
         runNearbySearch(selectedLocation);
       } else {
-        // Otherwise geocode the input
-        geocoder.geocode({ address: input + ', Bangalore, India' }, (res, status) => {
-          if (status === 'OK' && res[0]) {
-            runNearbySearch(res[0].geometry.location);
-          } else {
-            displayError('Geocoding failed: ' + status);
-          }
-        });
+        // Free-text locality
+        geocodeAndSearch(input + ', Bangalore, India');
       }
+    }
+    function geocodeAndSearch(query) {
+      displayError('Searching for restaurants...');
+      geocoder.geocode({ address: query }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+          const formatted = results[0].formatted_address;
+          if (!/Bengaluru|Bangalore/i.test(formatted)) {
+            displayError('Location not recognized within Bangalore.');
+            return;
+          }
+          runNearbySearch(results[0].geometry.location);
+        } else {
+          displayError('Geocoding failed: ' + status);
+        }
+      });
     }
     function runNearbySearch(location) {
       window.service.nearbySearch({ location, radius: 100, type: ['restaurant'] }, (places, status) => {
@@ -108,10 +122,21 @@
       const container = document.getElementById('results');
       container.innerHTML = '';
       arr.forEach(p => {
-        const card = document.createElement('div'); card.className = 'restaurant';
-        const h = document.createElement('h3'); h.textContent = p.name; card.appendChild(h);
-        if (p.vicinity) { const a = document.createElement('p'); a.textContent = p.vicinity; card.appendChild(a); }
-        if (p.rating) { const r = document.createElement('p'); r.textContent = 'Rating: ' + p.rating + ' ★'; card.appendChild(r); }
+        const card = document.createElement('div');
+        card.className = 'restaurant';
+        const h = document.createElement('h3');
+        h.textContent = p.name;
+        card.appendChild(h);
+        if (p.vicinity) {
+          const addr = document.createElement('p');
+          addr.textContent = p.vicinity;
+          card.appendChild(addr);
+        }
+        if (p.rating) {
+          const r = document.createElement('p');
+          r.textContent = 'Rating: ' + p.rating + ' ★';
+          card.appendChild(r);
+        }
         container.appendChild(card);
       });
     }

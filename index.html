@@ -15,7 +15,10 @@
     .restaurant h3 { margin: 0 0 0.5rem; color: #d62828; }
     .restaurant p { margin: 0.25rem 0; }
   </style>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDfZl2qxFBhNwmlS2CORhDDm6_4YqI2DPA&libraries=places"></script>
+  <!-- Load the Maps JS API with Places library and callback -->
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDfZl2qxFBhNwmlS2CORhDDm6_4YqI2DPA&libraries=places&callback=initPlaces">
+  </script>
 </head>
 <body>
   <header>
@@ -30,8 +33,7 @@
   <script>
     function initPlaces() {
       const bangalore = new google.maps.LatLng(12.9716, 77.5946);
-      const dummyMap = document.createElement('div');
-      const service = new google.maps.places.PlacesService(dummyMap);
+      const service = new google.maps.places.PlacesService(document.createElement('div'));
       service.nearbySearch({
         location: bangalore,
         radius: 5000,
@@ -46,30 +48,29 @@
         results.forEach(place => {
           const card = document.createElement('div');
           card.className = 'restaurant';
-          // Name
+
           const name = document.createElement('h3');
           name.textContent = place.name;
           card.appendChild(name);
-          // Vicinity
+
           if (place.vicinity) {
             const addr = document.createElement('p');
             addr.textContent = place.vicinity;
             card.appendChild(addr);
           }
-          // Rating
+
           if (place.rating) {
             const rating = document.createElement('p');
             rating.textContent = 'Rating: ' + place.rating + ' ★';
             card.appendChild(rating);
           }
+
           container.appendChild(card);
         });
       } else {
         container.textContent = 'No results found.';
       }
     }
-
-    document.addEventListener('DOMContentLoaded', initPlaces);
   </script>
 </body>
 </html>

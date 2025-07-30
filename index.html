@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Communeat Bangalore</title>
-  <meta name="description" content="Enter a Bangalore pincode to view restaurants on Google Maps." />
+  <meta name="description" content="Enter a Bangalore pincode to find 5 random restaurants.">
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary-color: #1a3642;
@@ -13,13 +15,19 @@
       --text-color: #333;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Arial, sans-serif; background: var(--bg-color); color: var(--text-color); }
+    body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg-color); color: var(--text-color); }
     header { background: var(--primary-color); color: #fff; text-align: center; padding: 2rem 1rem; }
     header h1 { margin: 0; font-size: 2.5rem; }
     main { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-    .input-group { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-    .input-group input { flex: 1; padding: 0.75rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px; }
-    .input-group button {
+    .search-section { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
+    .search-section input {
+      flex: 1;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .search-section button {
       padding: 0.75rem 1.5rem;
       font-size: 1rem;
       border: none;
@@ -27,34 +35,73 @@
       color: #fff;
       border-radius: 4px;
       cursor: pointer;
+      transition: background 0.2s;
     }
-    iframe { width: 100%; height: 500px; border: none; border-radius: 4px; }
+    .search-section button:hover { background: darken(var(--accent-color), 10%); }
+    #results { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+    .restaurant { background: #fff; padding: 1rem; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .restaurant h3 { margin: 0 0 0.5rem; color: var(--primary-color); font-size: 1.1rem; }
+    .restaurant p { margin: 0.25rem 0; font-size: 0.9rem; }
+    .error { grid-column: 1 / -1; color: red; text-align: center; }
   </style>
-</head>
-<body>
-  <header>
-    <h1>Communeat Bangalore</h1>
-    <p>Enter a pincode to see restaurants</p>
-  </header>
-  <main>
-    <div class="input-group">
-      <input type="text" id="pincode" placeholder="e.g., 560001" />
-      <button onclick="showMap()">Show Restaurants</button>
-    </div>
-    <iframe id="mapFrame" src="" allowfullscreen loading="lazy"></iframe>
-  </main>
-
   <script>
-    function showMap() {
+    // Handle authentication errors
+    window.gm_authFailure = function() {
+      displayError('Authentication error: check your API key.');
+    };
+    function displayError(msg) {
+      const container = document.getElementById('results');
+      container.innerHTML = `<p class=\"error\">${msg}</p>`;
+    }
+    function init() {
+      window.geocoder = new google.maps.Geocoder();
+      window.service = new google.maps.places.PlacesService(document.createElement('div'));
+    }
+    function searchByPincode() {
       const pin = document.getElementById('pincode').value.trim();
-      if (!pin) {
-        alert('Please enter a pincode.');
-        return;
-      }
-      const query = encodeURIComponent('restaurants in Bangalore ' + pin);
-      const url = 'https://www.google.com/maps?q=' + query + '&output=embed';
-      document.getElementById('mapFrame').src = url;
+      if (!pin) { displayError('Please enter a pincode.'); return; }
+      displayError('Searching for restaurants...');
+      geocoder.geocode({ address: pin + ', Bangalore, India' }, (res, status) => {
+        if (status === 'OK' && res[0]) {
+          const loc = res[0].geometry.location;
+          service.nearbySearch({ location: loc, radius: 100, type: ['restaurant'] }, (places, s) => {
+            if (s === google.maps.places.PlacesServiceStatus.OK) {
+              if (!places.length) return displayError('No restaurants found in this pincode.');
+              const shuffled = places.sort(() => 0.5 - Math.random());
+              displayResults(shuffled.slice(0, 5));
+            } else if (s === google.maps.places.PlacesServiceStatus.REQUEST_DENIED) {
+              displayError('Request denied: check API restrictions.');
+            } else {
+              displayError('Error: ' + s);
+            }
+          });
+        } else {
+          displayError('Geocoding failed: ' + status);
+        }
+      });
+    }
+    function displayResults(arr) {
+      const container = document.getElementById('results');
+      container.innerHTML = '';
+      arr.forEach(p => {
+        const card = document.createElement('div'); card.className = 'restaurant';
+        const h = document.createElement('h3'); h.textContent = p.name; card.appendChild(h);
+        if (p.vicinity) { const a = document.createElement('p'); a.textContent = p.vicinity; card.appendChild(a); }
+        if (p.rating) { const r = document.createElement('p'); r.textContent = 'Rating: ' + p.rating + ' ★'; card.appendChild(r); }
+        container.appendChild(card);
+      });
     }
   </script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDfZl2qxFBhNwmlS2CORhDDm6_4YqI2DPA&libraries=places&callback=init"></script>
+</head>
+<body>
+  <header><h1>Communeat Bangalore</h1></header>
+  <main>
+    <section class="search-section">
+      <input id="pincode" type="text" placeholder="Enter Bangalore pincode" />
+      <button onclick="searchByPincode()">Find 5 Random Restaurants</button>
+    </section>
+    <section id="results"></section>
+  </main>
 </body>
 </html>

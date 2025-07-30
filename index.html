@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Communeat Bangalore</title>
-  <meta name="description" content="Enter a Bangalore pincode to find 5 random restaurants.">
+  <meta name="description" content="Enter a Bangalore pincode or locality to find 5 random restaurants.">
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
@@ -37,7 +37,7 @@
       cursor: pointer;
       transition: background 0.2s;
     }
-    .search-section button:hover { background: darken(var(--accent-color), 10%); }
+    .search-section button:hover { background: #c96b55; }
     #results { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
     .restaurant { background: #fff; padding: 1rem; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     .restaurant h3 { margin: 0 0 0.5rem; color: var(--primary-color); font-size: 1.1rem; }
@@ -51,22 +51,22 @@
     };
     function displayError(msg) {
       const container = document.getElementById('results');
-      container.innerHTML = `<p class=\"error\">${msg}</p>`;
+      container.innerHTML = `<p class="error">${msg}</p>`;
     }
     function init() {
       window.geocoder = new google.maps.Geocoder();
       window.service = new google.maps.places.PlacesService(document.createElement('div'));
     }
-    function searchByPincode() {
-      const pin = document.getElementById('pincode').value.trim();
-      if (!pin) { displayError('Please enter a pincode.'); return; }
+    function searchByLocation() {
+      const input = document.getElementById('location').value.trim();
+      if (!input) { displayError('Please enter a pincode or locality.'); return; }
       displayError('Searching for restaurants...');
-      geocoder.geocode({ address: pin + ', Bangalore, India' }, (res, status) => {
+      geocoder.geocode({ address: input + ', Bangalore, India' }, (res, status) => {
         if (status === 'OK' && res[0]) {
           const loc = res[0].geometry.location;
           service.nearbySearch({ location: loc, radius: 100, type: ['restaurant'] }, (places, s) => {
             if (s === google.maps.places.PlacesServiceStatus.OK) {
-              if (!places.length) return displayError('No restaurants found in this pincode.');
+              if (!places.length) return displayError('No restaurants found for this location.');
               const shuffled = places.sort(() => 0.5 - Math.random());
               displayResults(shuffled.slice(0, 5));
             } else if (s === google.maps.places.PlacesServiceStatus.REQUEST_DENIED) {
@@ -92,14 +92,14 @@
       });
     }
   </script>
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDfZl2qxFBhNwmlS2CORhDDm6_4YqI2DPA&libraries=places&callback=init"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&callback=init"></script>
 </head>
 <body>
   <header><h1>Communeat Bangalore</h1></header>
   <main>
     <section class="search-section">
-      <input id="pincode" type="text" placeholder="Enter Bangalore pincode" />
-      <button onclick="searchByPincode()">Find 5 Random Restaurants</button>
+      <input id="location" type="text" placeholder="Enter Bangalore pincode or locality" />
+      <button onclick="searchByLocation()">Find 5 Random Restaurants</button>
     </section>
     <section id="results"></section>
   </main>

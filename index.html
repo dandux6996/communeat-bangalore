@@ -64,7 +64,7 @@
       geocoder.geocode({ address: pin + ', Bangalore, India' }, (res, status) => {
         if (status === 'OK' && res[0]) {
           const loc = res[0].geometry.location;
-          service.nearbySearch({ location: loc, radius: 3000, type: ['restaurant'] }, (places, s) => {
+          service.nearbySearch({ location: loc, radius: 100, type: ['restaurant'] }, (places, s) => {
             if (s === google.maps.places.PlacesServiceStatus.OK) {
               if (!places.length) return displayError('No restaurants found in this pincode.');
               const shuffled = places.sort(() => 0.5 - Math.random());

@@ -6,30 +6,30 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Poppins', sans-serif; margin: 0; background: #FFF7F0; color: #2E2E2E; }
-    header { background: url('https://myloveofbaking.com/wp-content/uploads/2023/06/IMG_9500.jpg') center/cover no-repeat; color:#FFF;
-      text-align:center; padding:6rem 1rem 2.5rem; min-height:300px; position:relative}
-    header::after { content:""; background:rgba(0,0,0,0.5); position:absolute; top:0;left:0;width:100%;height:100%;z-index:0; }
-    header h1,header p { position:relative; z-index:1; }
-    .tagline { margin-top:1rem;font-size:1.5rem;font-weight:300; }
-    main { max-width:880px; margin:2rem auto; padding:0 1rem;}
-    .categories { display:flex;justify-content:center;gap:2rem;margin-bottom:2rem;}
-    .categories h2 { margin:0; font-weight:500; color:#2E2E2E; }
-    #autocomplete-div { display:flex; gap:0.5rem; margin-bottom:2rem; align-items:center;}
-    #results { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:1rem; margin-bottom:2rem;}
-    .restaurant { background:#FFF; padding:1.25rem; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); color:#2E2E2E; }
-    .restaurant h3 { margin:0 0 0.5rem; font-size:1.2rem;}
-    .restaurant p { margin:0.25rem 0;font-size: 0.95rem;}
+    header { background: url('https://myloveofbaking.com/wp-content/uploads/2023/06/IMG_9500.jpg') center/cover no-repeat; color: #FFF;
+      text-align: center; padding: 6rem 1rem 2.5rem; min-height: 300px; position: relative }
+    header::after { content: ""; background: rgba(0,0,0,0.5); position: absolute; top:0;left:0;width:100%;height:100%;z-index:0; }
+    header h1,header p { position: relative; z-index: 1; }
+    .tagline { margin-top: 1rem;font-size: 1.5rem;font-weight:300; }
+    main { max-width: 880px; margin: 2rem auto; padding:0 1rem;}
+    .categories { display: flex;justify-content: center;gap:2rem;margin-bottom:2rem;}
+    .categories h2 { margin: 0; font-weight: 500; color: #2E2E2E; }
+    #search-section { display: flex; gap: 0.5rem; margin-bottom:2rem; align-items: center;}
+    #location { flex: 1; padding: 1rem; font-size: 1rem; border: 2px solid #2E2E2E; border-radius: 4px;}
+    #location:focus { outline: none; border-color: #D72638;}
+    #searchBtn { padding: 1rem 2rem; font-size:1rem; border: none; background: #D72638; color: #FFF; border-radius:4px; cursor: pointer;transition:background 0.2s,transform 0.2s;}
+    #searchBtn:hover { background: #b41c2d; transform: translateY(-2px);}
+    #results { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap:1rem; margin-bottom:2rem;}
+    .restaurant { background: #FFF; padding:1.25rem; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); color:#2E2E2E;}
+    .restaurant h3 { margin:0 0 0.5rem;font-size:1.2rem;}
+    .restaurant p { margin:0.25rem 0; font-size:0.95rem;}
     .error { grid-column:1/-1; color:red;text-align:center;}
     @media (max-width:768px) {
       header { padding:3rem 1rem 1.5rem; }
       header h1 { font-size:2.2rem; }
     }
   </style>
-  <!-- Google Maps JavaScript API with Places library (2025 approach) -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCYGiid19V7Ili-bMwLBY5UovOeetMJUnA&libraries=places"></script>
-  <!-- Load the new Place Autocomplete Element JS/Web Component (2025 approach)-->
-
-  <script src="https://unpkg.com/@googlemaps/places-autocomplete-element/dist/index.umd.js"></script>
 </head>
 <body>
   <header>
@@ -41,60 +41,56 @@
       <h2>Collection</h2>
       <h2>Community</h2>
     </div>
-    <div id="autocomplete-div">
-      <!-- New web component for Place Autocomplete -->
-      <gmpx-place-autocomplete id="autocomplete" style="flex:1"></gmpx-place-autocomplete>
-      <button id="searchBtn" style="padding:1rem 2rem;">Find 5 Random Restaurants</button>
+    <div id="search-section">
+      <input id="location" type="text" placeholder="Enter Bangalore pincode or locality" autocomplete="off">
+      <button id="searchBtn">Find 5 Random Restaurants</button>
     </div>
     <section id="results"></section>
   </main>
   <script>
-    let selectedLatLng = null;
-
-    // Listen for selection on PlaceAutocompleteElement
-    const autocomplete = document.getElementById('autocomplete');
-    autocomplete.addEventListener('gmpx-placechange', event => {
-      const place = event.detail;
-      if (place && place.location) {
-        selectedLatLng = place.location;
-      }
-    });
-
-    document.getElementById('searchBtn').onclick = function() {
-      document.getElementById('results').innerHTML = '';
-      if (!selectedLatLng) {
-        displayError('Please select a Bangalore locality from the autocomplete.');
-        return;
-      }
-      // Restrict only to Bangalore by checking coordinates (rude but basic)
-      // Bangalore's approx bounding box: Lat 12.8-13.2, Lng 77.4-77.8
-      if (selectedLatLng.lat < 12.7 || selectedLatLng.lat > 13.3 || selectedLatLng.lng < 77.3 || selectedLatLng.lng > 77.9) {
-        displayError('Please select a locality within Bangalore.');
-        return;
-      }
-      runNearbySearch(selectedLatLng);
-    };
-
     function displayError(msg) {
       document.getElementById('results').innerHTML = `<p class="error">${msg}</p>`;
     }
-
+    function clearResults() {
+      document.getElementById('results').innerHTML = '';
+    }
+    document.getElementById('searchBtn').onclick = function() {
+      clearResults();
+      let input = document.getElementById('location').value.trim();
+      if (!input) return displayError('Please enter a Bangalore pincode or locality.');
+      geocodeAndSearch(input);
+    };
+    function geocodeAndSearch(query) {
+      displayError('Searching...');
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ address: query + ', Bangalore, India' }, (results, status) => {
+        if (status === 'OK' && results && results[0]) {
+          // Restrict to locations within Bangalore (branding/accuracy)
+          const address = results[0].formatted_address;
+          if (!/Bengaluru|Bangalore/i.test(address)) {
+            displayError('Location not in Bangalore.');
+            return;
+          }
+          const location = results[0].geometry.location;
+          runNearbySearch(location);
+        } else if (status === 'ZERO_RESULTS') {
+          displayError('No results found for that location.');
+        } else {
+          displayError('Geocode failed: ' + status);
+          console.error('Geocode error:', results, status);
+        }
+      });
+    }
     function runNearbySearch(location) {
-      // Use the new Places API style: nearbySearch, see:
-      // https://developers.google.com/maps/documentation/javascript/places-migration-overview
-
       const request = {
-        location: new google.maps.LatLng(location.lat, location.lng),
+        location: location,
         radius: 2000,
-        type: 'restaurant'
+        type: ['restaurant']
       };
-
       const map = new google.maps.Map(document.createElement('div')); // Dummy map
       const service = new google.maps.places.PlacesService(map);
-
       service.nearbySearch(request, (results, status) => {
         if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
-          // Shuffle and pick 5
           results = results.sort(() => 0.5 - Math.random()).slice(0, 5);
           displayResults(results);
         } else if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
@@ -105,7 +101,6 @@
         }
       });
     }
-
     function displayResults(arr) {
       const c = document.getElementById('results');
       c.innerHTML = '';

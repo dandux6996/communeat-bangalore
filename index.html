@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Commun-Eat-Y</title>
   <meta name="description" content="Explore restaurants in Bangalore under Collection and Community categories.">
-  <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -193,6 +192,7 @@
         return;
       }
       window.geocoder.geocode({ address: query }, (results, status) => {
+        console.log('Geocode status:', status, 'Results:', results);
         if (status === 'OK' && results && results[0]) {
           const f = results[0].formatted_address;
           if (!/Bengaluru|Bangalore/i.test(f)) {
@@ -212,6 +212,7 @@
         displayError('Places Service not initialized.');
         return;
       }
+      // You can further increase the radius if you still get no results in some areas.
       window.service.nearbySearch(
         {
           location: loc,
@@ -230,7 +231,7 @@
             displayError('Request denied. Check your Google API key or billing.');
           } else {
             displayError('Error: ' + status);
-            console.error('NearbySearch error:', status, places);
+            console.error('NearbySearch unexpected status:', status, places);
           }
         }
       );
@@ -244,12 +245,11 @@
         d.className = 'restaurant';
 
         const h = document.createElement('h3');
-        h.textContent = p.name;
+        h.textContent = p.name || 'No name found';
         d.appendChild(h);
 
         if (p.vicinity)
           d.appendChild(Object.assign(document.createElement('p'), { textContent: p.vicinity }));
-
         if (p.rating)
           d.appendChild(Object.assign(document.createElement('p'), { textContent: 'Rating: ' + p.rating + ' ★' }));
 

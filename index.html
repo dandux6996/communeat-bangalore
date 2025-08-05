@@ -1,136 +1,111 @@
-<!cgpt_gapi>
+<!cgpt>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Communeat Bangalore</title>
-  <meta name="description" content="Explore restaurants in Bangalore under Collection and Community categories.">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Restaurant Finder</title>
   <style>
-    :root {
-      --primary-color: #D72638;
-      --accent-color: #FFFFFF;
-      --neutral-color: #2E2E2E;
-      --bg-color: #FFF7F0;
-      --text-color: var(--neutral-color);
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    #controls { margin-bottom: 1rem; }
+    #restaurant-list { list-style: none; padding: 0; }
+    #restaurant-list li { 
+      background: #f9f9f9; 
+      margin: .5rem 0; 
+      padding: .75rem; 
+      border-radius: 6px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    *, *::before, *::after { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background: var(--bg-color);
-      color: var(--text-color);
-    }
-    header {
-      position: relative;
-      background: url('https://myloveofbaking.com/wp-content/uploads/2023/06/IMG_9500.jpg') center/cover no-repeat;
-      color: var(--accent-color);
-      text-align: center;
-      padding: 8rem 1rem 3rem;
-      min-height: 400px;
-    }
-    header::after {
-      content: '';
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.5); z-index: 0;
-    }
-    header h1, header p { position: relative; z-index: 1; margin: 0; }
-    header h1 { font-size: 3rem; font-weight: 700; }
-    .tagline { margin-top: 0.5rem; font-size: 1.25rem; font-weight: 300; }
-    main { max-width: 880px; margin: 2rem auto; padding: 0 1rem; }
-    .categories { display: flex; justify-content: center; gap: 2rem; margin-bottom: 1.5rem; }
-    .categories h2 { margin: 0; font-weight: 500; cursor: pointer; color: var(--neutral-color); transition: color 0.3s; }
-    .categories h2:hover { color: var(--primary-color); }
-    .search-section { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
-    .search-section input {
-      flex: 1; padding: 0.75rem; font-size: 1rem;
-      border: 2px solid var(--neutral-color); border-radius: 4px;
-      transition: border-color 0.3s;
-    }
-    .search-section input:focus { outline: none; border-color: var(--primary-color); }
-    .search-section button {
-      padding: 0.75rem 1.5rem; font-size: 1rem; border: none;
-      background: var(--primary-color); color: var(--accent-color);
-      border-radius: 4px; cursor: pointer;
-      transition: background 0.2s, transform 0.2s;
-    }
-    .search-section button:hover { background: #b41c2d; transform: translateY(-2px); }
-    #results { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 1rem; margin-bottom: 2rem; }
-    .restaurant { background: var(--accent-color); padding: 1rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: transform 0.2s; }
-    .restaurant:hover { transform: translateY(-4px); }
-    .restaurant h3 { margin: 0 0 0.5rem; font-size: 1.1rem; color: var(--primary-color); }
-    .restaurant p { margin: 0.25rem 0; font-size: 0.9rem; }
-    .error { grid-column: 1 / -1; color: red; text-align: center; }
+    .error { color: red; }
   </style>
-  <script>
-    let geocoder, placesService;
-    function init() {
-      geocoder = new google.maps.Geocoder();
-      // create a dummy map div for service
-      const dummyDiv = document.createElement('div');
-      placesService = new google.maps.places.PlacesService(dummyDiv);
-    }
-    function displayError(msg) {
-      document.getElementById('results').innerHTML = `<p class="error">${msg}</p>`;
-    }
-    function searchByLocation() {
-      const query = document.getElementById('location').value.trim();
-      if (!query) {
-        displayError('Please enter a Bangalore pincode or locality.');
-        return;
-      }
-      displayError('Searching...');
-      geocoder.geocode({ address: query + ', Bangalore, India' }, (results, status) => {
-        if (status === 'OK' && results[0]) {
-          const loc = results[0].geometry.location;
-          placesService.nearbySearch({ location: loc, radius: 2000, type: ['restaurant'] }, (places, ps) => {
-            if (ps === google.maps.places.PlacesServiceStatus.OK && places.length) {
-              const selection = places.sort(() => 0.5 - Math.random()).slice(0, 5);
-              renderResults(selection);
-            } else if (ps === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
-              displayError('No restaurants found.');
-            } else {
-              displayError('Error: ' + ps);
-            }
-          });
-        } else if (status === 'ZERO_RESULTS') {
-          displayError('Location not found.');
-        } else {
-          displayError('Geocoding failed: ' + status);
-        }
-      });
-    }
-    function renderResults(list) {
-      const container = document.getElementById('results');
-      container.innerHTML = '';
-      list.forEach(place => {
-        const card = document.createElement('div');
-        card.className = 'restaurant';
-        card.innerHTML = `<h3>${place.name}</h3>
-                          <p>${place.vicinity || ''}</p>
-                          ${place.rating? `<p>Rating: ${place.rating} ★</p>` : ''}`;
-        container.appendChild(card);
-      });
-    }
-  </script>
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=init"></script>
 </head>
 <body>
-  <header>
-    <h1>Communeat Bangalore</h1>
-    <p class="tagline">Discover flavor. Share belonging.</p>
-  </header>
-  <main>
-    <div class="categories">
-      <h2>Collection</h2>
-      <h2>Community</h2>
-    </div>
-    <section class="search-section">
-      <input id="location" type="text" placeholder="Enter Bangalore pincode or locality">
-      <button onclick="searchByLocation()">Find 5 Random Restaurants</button>
-    </section>
-    <section id="results"></section>
-  </main>
+  <div id="controls">
+    <input id="location-input" type="text" placeholder="Enter pincode or locality" size="40"/>
+    <button id="search-btn">Search</button>
+    <span id="status"></span>
+  </div>
+  <ul id="restaurant-list"></ul>
+
+  <script>
+    let geocoder, placesService;
+
+    // Initialize when the Maps JS API loads
+    function initMap() {
+      geocoder = new google.maps.Geocoder();
+      // A dummy <div> is enough for PlacesService
+      placesService = new google.maps.places.PlacesService(document.createElement('div'));
+      document.getElementById('search-btn')
+              .addEventListener('click', onSearchClick);
+    }
+
+    function onSearchClick() {
+      const input = document.getElementById('location-input').value.trim();
+      const status = document.getElementById('status');
+      const listEl = document.getElementById('restaurant-list');
+      listEl.innerHTML = '';
+      status.textContent = '';
+      if (!input) {
+        status.textContent = 'Please enter something.';
+        status.className = 'error';
+        return;
+      }
+      status.textContent = 'Geocoding...';
+      geocoder.geocode({ address: input }, (results, geocodeStatus) => {
+        if (geocodeStatus !== 'OK' || !results[0]) {
+          status.textContent = 'Could not find that location.';
+          status.className = 'error';
+          return;
+        }
+        const loc = results[0].geometry.location;
+        status.textContent = 'Searching for restaurants...';
+        findRestaurants(loc);
+      });
+    }
+
+    function findRestaurants(location) {
+      // Search radius in meters
+      const request = {
+        location,
+        radius: 3000,
+        type: 'restaurant'
+      };
+      placesService.nearbySearch(request, (results, placesStatus) => {
+        const status = document.getElementById('status');
+        if (placesStatus !== 'OK' || !results || results.length === 0) {
+          status.textContent = 'No restaurants found nearby.';
+          status.className = 'error';
+          return;
+        }
+        // Shuffle & pick first 5
+        shuffleArray(results);
+        const top5 = results.slice(0, 5);
+        renderList(top5);
+        status.textContent = `Showing 5 random restaurants near you.`;
+        status.className = '';
+      });
+    }
+
+    function renderList(restaurants) {
+      const listEl = document.getElementById('restaurant-list');
+      restaurants.forEach(place => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${place.name}</strong><br/>
+                        ${place.vicinity || place.formatted_address || ''}`;
+        listEl.appendChild(li);
+      });
+    }
+
+    // Fisher–Yates shuffle
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+  </script>
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap">
+  </script>
 </body>
 </html>

@@ -1,74 +1,154 @@
-<!perp>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Bangalore Restaurant Finder</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial‐scale=1.0"/>
+  <title>Restaurant Finder</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 40px;}
-    #results {margin-top: 20px;}
-    .restaurant {margin-bottom: 15px;}
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    #controls { margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+    #controls select,
+    #controls input { padding: 0.5rem; font-size: 1rem; }
+    #controls button { padding: 0.6rem 1rem; font-size: 1rem; cursor: pointer; }
+    #restaurant-list { list-style: none; padding: 0; }
+    #restaurant-list li {
+      background: #f9f9f9;
+      margin: .5rem 0;
+      padding: .75rem;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .error { color: red; }
   </style>
 </head>
 <body>
-  <h2>Bangalore Restaurant Finder</h2>
-  <label for="locationInput">Enter Pincode or Locality:</label>
-  <input type="text" id="locationInput" placeholder="Eg: 560001 or Indiranagar"/>
-  <button onclick="findRestaurants()">Search</button>
-  <div id="results"></div>
+  <div id="controls">
+    <input id="location-input" type="text" placeholder="Enter pincode or locality" size="30"/>
+    <select id="cuisine-select">
+      <option value="">Any cuisine</option>
+      <option>American</option>
+      <option>Asian</option>
+      <option>Bakery</option>
+      <option>Bar</option>
+      <option>BBQ</option>
+      <option>Breakfast</option>
+      <option>Brazilian</option>
+      <option>British</option>
+      <option>Buffets</option>
+      <option>Café</option>
+      <option>Caribbean</option>
+      <option>Chinese</option>
+      <option>Coffee</option>
+      <option>Comfort Food</option>
+      <option>Desserts</option>
+      <option>Dim Sum</option>
+      <option>European</option>
+      <option>Fast Food</option>
+      <option>French</option>
+      <option>German</option>
+      <option>Greek</option>
+      <option>Indian</option>
+      <option>Italian</option>
+      <option>Japanese</option>
+      <option>Korean</option>
+      <option>Latin American</option>
+      <option>Malaysian</option>
+      <option>Mediterranean</option>
+      <option>Mexican</option>
+      <option>Middle Eastern</option>
+      <option>Pizza</option>
+      <option>Seafood</option>
+      <option>Spanish</option>
+      <option>Steakhouse</option>
+      <option>Sushi</option>
+      <option>Tapas</option>
+      <option>Thai</option>
+      <option>Vegetarian</option>
+      <option>Vietnamese</option>
+    </select>
+    <button id="search-btn">Search</button>
+    <span id="status"></span>
+  </div>
+  <ul id="restaurant-list"></ul>
 
   <script>
-    const apiKey = 'YOUR_GOOGLE_MAPS_API_KEY';
+    let geocoder, placesService;
 
-    function findRestaurants() {
-      const location = document.getElementById('locationInput').value.trim();
-      if (!location) {
-        alert("Please enter a pincode or locality.");
+    function initMap() {
+      geocoder = new google.maps.Geocoder();
+      placesService = new google.maps.places.PlacesService(document.createElement('div'));
+      document.getElementById('search-btn')
+              .addEventListener('click', onSearchClick);
+    }
+
+    function onSearchClick() {
+      const address = document.getElementById('location-input').value.trim();
+      const cuisine = document.getElementById('cuisine-select').value;
+      const status = document.getElementById('status');
+      const listEl = document.getElementById('restaurant-list');
+      listEl.innerHTML = '';
+      status.textContent = '';
+      if (!address) {
+        status.textContent = 'Please enter a pincode or locality.';
+        status.className = 'error';
         return;
       }
-      document.getElementById('results').innerText = 'Searching...';
-
-      // Step 1: Geocode to get lat/lng
-      fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)},Bangalore&key=${apiKey}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.status !== 'OK' || !data.results.length) {
-            document.getElementById('results').innerText = "Location not found. Try a valid pincode/locality.";
-            return;
-          }
-          const loc = data.results[0].geometry.location;
-          // Step 2: Nearby Search for restaurants
-          return fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${loc.lat},${loc.lng}&radius=2000&type=restaurant&key=${AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps}`);
-        })
-        .then(response => response ? response.json() : null)
-        .then(data => {
-          if (!data || data.status !== 'OK' || !data.results.length) {
-            document.getElementById('results').innerText = "No restaurants found in this area.";
-            return;
-          }
-          // Step 3: Pick 5 random restaurants
-          const restaurants = data.results;
-          const picked = [];
-          let used = {};
-          while (picked.length < 5 && picked.length < restaurants.length) {
-            let i = Math.floor(Math.random() * restaurants.length);
-            if (!used[i]) {
-              picked.push(restaurants[i]);
-              used[i] = true;
-            }
-          }
-          let html = `<h3>5 Restaurants in ${document.getElementById('locationInput').value}:</h3>`;
-          picked.forEach((rest, idx) => {
-            html += `<div class="restaurant">
-              <b>${idx+1}. ${rest.name}</b><br>
-              ${rest.vicinity || rest.formatted_address || "Address not available"}
-            </div>`;
-          });
-          document.getElementById('results').innerHTML = html;
-        })
-        .catch(error => {
-          document.getElementById('results').innerText = "Error fetching data. Please try again.";
-        });
+      status.textContent = 'Geocoding...';
+      geocoder.geocode({ address }, (results, geocodeStatus) => {
+        if (geocodeStatus !== 'OK' || !results[0]) {
+          status.textContent = 'Could not find that location.';
+          status.className = 'error';
+          return;
+        }
+        const loc = results[0].geometry.location;
+        status.textContent = 'Searching for restaurants...';
+        findRestaurants(loc, cuisine);
+      });
     }
+
+    function findRestaurants(location, cuisine) {
+      const request = {
+        location,
+        radius: 3000,
+        type: 'restaurant'
+      };
+      if (cuisine) {
+        request.keyword = cuisine;
+      }
+      placesService.nearbySearch(request, (results, placesStatus) => {
+        const status = document.getElementById('status');
+        if (placesStatus !== 'OK' || !results || results.length === 0) {
+          status.textContent = 'No restaurants found.';
+          status.className = 'error';
+          return;
+        }
+        shuffleArray(results);
+        const top5 = results.slice(0, 5);
+        renderList(top5);
+        status.textContent = `Showing 5 random ${cuisine || ''} restaurants.`;
+        status.className = '';
+      });
+    }
+
+    function renderList(restaurants) {
+      const listEl = document.getElementById('restaurant-list');
+      restaurants.forEach(place => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${place.name}</strong><br/>
+                        ${place.vicinity || place.formatted_address || ''}`;
+        listEl.appendChild(li);
+      });
+    }
+
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+  </script>
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap">
   </script>
 </body>
 </html>

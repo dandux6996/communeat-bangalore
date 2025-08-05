@@ -33,15 +33,21 @@
       padding: 0.75rem;
       border-bottom: 1px solid #ddd;
     }
-    th {
-      background: #f4f4f4;
-    }
+    th { background: #f4f4f4; }
     .error { color: red; }
   </style>
 </head>
 <body>
   <div id="controls">
-    <input id="location-input" type="text" placeholder="Enter pincode or locality" size="30"/>
+    <input
+      id="location-input"
+      list="location-datalist"
+      type="text"
+      placeholder="Enter pincode or locality"
+      size="30"
+    />
+    <datalist id="location-datalist"></datalist>
+
     <select id="cuisine-select">
       <option value="">Any cuisine</option>
       <option>American</option>
@@ -84,6 +90,7 @@
       <option>Vegetarian</option>
       <option>Vietnamese</option>
     </select>
+
     <button id="search-btn">Search</button>
     <span id="status"></span>
   </div>
@@ -98,27 +105,59 @@
       </tr>
     </thead>
     <tbody>
-      <!-- rows inserted here -->
+      <!-- rows will be inserted here -->
     </tbody>
   </table>
 
   <script>
-    let geocoder, placesService;
+    let geocoder, placesService, autocompleteService;
 
     function initMap() {
       geocoder = new google.maps.Geocoder();
       placesService = new google.maps.places.PlacesService(document.createElement('div'));
+      autocompleteService = new google.maps.places.AutocompleteService();
+
       document.getElementById('search-btn')
               .addEventListener('click', onSearchClick);
+
+      // Autofill setup
+      const locInput = document.getElementById('location-input');
+      const datalist  = document.getElementById('location-datalist');
+      let debounceTimer;
+
+      locInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        const term = locInput.value.trim();
+        if (term.length < 3) return;
+        debounceTimer = setTimeout(() => {
+          autocompleteService.getPlacePredictions({
+            input: term,
+            types: ['(regions)'],
+            componentRestrictions: { country: 'IN' }
+          }, (preds, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && preds) {
+              // Sort alphabetically by description
+              preds.sort((a, b) => a.description.localeCompare(b.description));
+              datalist.innerHTML = '';
+              preds.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.description;
+                datalist.appendChild(opt);
+              });
+            }
+          });
+        }, 300);
+      });
     }
 
     function onSearchClick() {
       const address = document.getElementById('location-input').value.trim();
       const cuisine = document.getElementById('cuisine-select').value;
-      const status = document.getElementById('status');
-      const tbody = document.querySelector('#restaurant-table tbody');
+      const status  = document.getElementById('status');
+      const tbody   = document.querySelector('#restaurant-table tbody');
       tbody.innerHTML = '';
       status.textContent = '';
+
       if (!address) {
         status.textContent = 'Please enter a pincode or locality.';
         status.className = 'error';
@@ -131,30 +170,24 @@
           status.className = 'error';
           return;
         }
-        const loc = results[0].geometry.location;
         status.textContent = 'Searching for top-rated restaurants...';
-        findTopRated(loc, cuisine);
+        findTopRated(results[0].geometry.location, cuisine);
       });
     }
 
     function findTopRated(location, cuisine) {
-      const request = {
-        location,
-        radius: 3000,
-        type: 'restaurant'
-      };
-      if (cuisine) {
-        request.keyword = cuisine;
-      }
+      const request = { location, radius: 3000, type: 'restaurant' };
+      if (cuisine) request.keyword = cuisine;
+
       placesService.nearbySearch(request, (results, placesStatus) => {
         const status = document.getElementById('status');
-        const tbody = document.querySelector('#restaurant-table tbody');
-        if (placesStatus !== 'OK' || !results || results.length === 0) {
+        const tbody  = document.querySelector('#restaurant-table tbody');
+        if (placesStatus !== 'OK' || !results || !results.length) {
           status.textContent = 'No restaurants found.';
           status.className = 'error';
           return;
         }
-        // Filter & sort by rating desc, then by review count
+        // Filter & sort
         const top5 = results
           .filter(r => typeof r.rating === 'number')
           .sort((a, b) => {

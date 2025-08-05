@@ -2,22 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial‐scale=1.0"/>
-  <title>Restaurant Finder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Top Rated Restaurants Finder</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 2rem; }
-    #controls { margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+    #controls {
+      margin-bottom: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
     #controls select,
-    #controls input { padding: 0.5rem; font-size: 1rem; }
-    #controls button { padding: 0.6rem 1rem; font-size: 1rem; cursor: pointer; }
+    #controls input {
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    #controls button {
+      padding: 0.6rem 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
     #restaurant-list { list-style: none; padding: 0; }
     #restaurant-list li {
       background: #f9f9f9;
-      margin: .5rem 0;
-      padding: .75rem;
+      margin: 0.5rem 0;
+      padding: 0.75rem;
       border-radius: 6px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
+    .name { font-weight: bold; }
+    .rating { color: #555; }
     .error { color: red; }
   </style>
 </head>
@@ -69,6 +84,7 @@
     <button id="search-btn">Search</button>
     <span id="status"></span>
   </div>
+
   <ul id="restaurant-list"></ul>
 
   <script>
@@ -102,11 +118,11 @@
         }
         const loc = results[0].geometry.location;
         status.textContent = 'Searching for restaurants...';
-        findRestaurants(loc, cuisine);
+        findTopRated(loc, cuisine);
       });
     }
 
-    function findRestaurants(location, cuisine) {
+    function findTopRated(location, cuisine) {
       const request = {
         location,
         radius: 3000,
@@ -122,10 +138,15 @@
           status.className = 'error';
           return;
         }
-        shuffleArray(results);
-        const top5 = results.slice(0, 5);
+        // Filter out those without a rating, then sort by rating desc, then by number of ratings desc
+        const withRatings = results.filter(r => typeof r.rating === 'number');
+        withRatings.sort((a, b) => {
+          if (b.rating !== a.rating) return b.rating - a.rating;
+          return (b.user_ratings_total || 0) - (a.user_ratings_total || 0);
+        });
+        const top5 = withRatings.slice(0, 5);
         renderList(top5);
-        status.textContent = `Showing 5 random ${cuisine || ''} restaurants.`;
+        status.textContent = `Showing top 5 ${cuisine || ''} restaurants by rating.`;
         status.className = '';
       });
     }
@@ -134,19 +155,18 @@
       const listEl = document.getElementById('restaurant-list');
       restaurants.forEach(place => {
         const li = document.createElement('li');
-        li.innerHTML = `<strong>${place.name}</strong><br/>
-                        ${place.vicinity || place.formatted_address || ''}`;
+        li.innerHTML = `
+          <div class="name">${place.name}</div>
+          <div class="rating">Rating: ${place.rating} 
+            ${place.user_ratings_total ? `(${place.user_ratings_total} reviews)` : ''}
+          </div>
+          <div class="address">${place.vicinity || place.formatted_address || ''}</div>
+        `;
         listEl.appendChild(li);
       });
     }
-
-    function shuffleArray(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-    }
   </script>
+
   <script async
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap">
   </script>

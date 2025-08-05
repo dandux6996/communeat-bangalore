@@ -34,6 +34,11 @@
       border-bottom: 1px solid #ddd;
     }
     th { background: #f4f4f4; }
+    #map {
+      height: 400px;
+      width: 100%;
+      margin-top: 1rem;
+    }
     .error { color: red; }
   </style>
 </head>
@@ -50,6 +55,7 @@
 
     <select id="cuisine-select">
       <option value="">Any cuisine</option>
+      <!-- cuisine options... -->
       <option>American</option>
       <option>Asian</option>
       <option>Bakery</option>
@@ -109,16 +115,25 @@
     </tbody>
   </table>
 
+  <div id="map"></div>
+
   <script>
-    let geocoder, placesService, autocompleteService;
+    let geocoder, placesService, autocompleteService, map, infoWindow, markers = [];
 
     function initMap() {
       geocoder = new google.maps.Geocoder();
       placesService = new google.maps.places.PlacesService(document.createElement('div'));
       autocompleteService = new google.maps.places.AutocompleteService();
+      infoWindow = new google.maps.InfoWindow();
 
       document.getElementById('search-btn')
               .addEventListener('click', onSearchClick);
+
+      // Initialize blank map centered on Bangalore
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 12.9716, lng: 77.5946 },
+        zoom: 12
+      });
 
       // Autofill setup
       const locInput = document.getElementById('location-input');
@@ -136,7 +151,6 @@
             componentRestrictions: { country: 'IN' }
           }, (preds, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK && preds) {
-              // Sort alphabetically by description
               preds.sort((a, b) => a.description.localeCompare(b.description));
               datalist.innerHTML = '';
               preds.forEach(p => {
@@ -187,6 +201,10 @@
           status.className = 'error';
           return;
         }
+        // Clear existing markers
+        markers.forEach(m => m.setMap(null));
+        markers = [];
+
         // Filter & sort
         const top5 = results
           .filter(r => typeof r.rating === 'number')
@@ -195,6 +213,10 @@
             return (b.user_ratings_total || 0) - (a.user_ratings_total || 0);
           })
           .slice(0, 5);
+
+        // Update table and map
+        map.setCenter(location);
+        map.setZoom(14);
 
         top5.forEach(place => {
           const tr = document.createElement('tr');
@@ -205,6 +227,18 @@
             <td>${place.vicinity || place.formatted_address || ''}</td>
           `;
           tbody.appendChild(tr);
+
+          // Add marker
+          const marker = new google.maps.Marker({
+            map: map,
+            position: place.geometry.location,
+            title: place.name
+          });
+          marker.addListener('click', () => {
+            infoWindow.setContent(`<strong>${place.name}</strong><br />${place.rating.toFixed(1)} out of 5`);
+            infoWindow.open(map, marker);
+          });
+          markers.push(marker);
         });
 
         status.textContent = `Showing top 5 ${cuisine || ''} restaurants by rating.`;

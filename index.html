@@ -166,7 +166,7 @@
       status.textContent = 'Geocoding...';
       geocoder.geocode({ address }, (results, geocodeStatus) => {
         if (geocodeStatus !== 'OK' || !results[0]) { status.textContent = 'Could not find that location.'; status.className = 'error'; return; }
-        status.textContent = 'Searching for top-rated restaurants with >200 reviews...';
+        status.textContent = 'Searching for top-rated restaurants';
         findTopRated(results[0].geometry.location, cuisine);
       });
     }
@@ -197,10 +197,11 @@
             infoWindow.open(map,marker);
           }); markers.push(marker);
         });
-        status.textContent=`Showing top ${top5.length} restaurants by rating with >200 reviews.`; status.className='';
+        status.textContent=`Showing top ${top5.length} restaurants by rating.`; status.className='';
       });
     }
   </script>
   <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap"></script>
 </body>
 </html>
+

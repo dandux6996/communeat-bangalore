@@ -1,4 +1,4 @@
-<!chatgpt_gAPI>
+<!cgpt_gapi>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,7 +33,7 @@
     header::after {
       content: '';
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5); z-index: 0;
+      background: rgba(0, 0, 0, 0.5); z-index: 0;
     }
     header h1, header p { position: relative; z-index: 1; margin: 0; }
     header h1 { font-size: 3rem; font-weight: 700; }
@@ -57,61 +57,59 @@
     }
     .search-section button:hover { background: #b41c2d; transform: translateY(-2px); }
     #results { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 1rem; margin-bottom: 2rem; }
-    .restaurant {
-      background: var(--accent-color); padding: 1rem;
-      border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      transition: transform 0.2s;
-    }
+    .restaurant { background: var(--accent-color); padding: 1rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: transform 0.2s; }
     .restaurant:hover { transform: translateY(-4px); }
     .restaurant h3 { margin: 0 0 0.5rem; font-size: 1.1rem; color: var(--primary-color); }
     .restaurant p { margin: 0.25rem 0; font-size: 0.9rem; }
     .error { grid-column: 1 / -1; color: red; text-align: center; }
   </style>
   <script>
-    let service;
+    let geocoder, placesService;
     function init() {
-      // Initialize PlacesService with dummy map div
-      const dummyMap = document.createElement('div');
-      service = new google.maps.places.PlacesService(dummyMap);
+      geocoder = new google.maps.Geocoder();
+      // create a dummy map div for service
+      const dummyDiv = document.createElement('div');
+      placesService = new google.maps.places.PlacesService(dummyDiv);
     }
     function displayError(msg) {
       document.getElementById('results').innerHTML = `<p class="error">${msg}</p>`;
     }
     function searchByLocation() {
-      const input = document.getElementById('location').value.trim();
-      if (!input) return displayError('Please enter a Bangalore pincode or locality.');
+      const query = document.getElementById('location').value.trim();
+      if (!query) {
+        displayError('Please enter a Bangalore pincode or locality.');
+        return;
+      }
       displayError('Searching...');
-      // First find the city/place geometry
-      service.findPlaceFromQuery({
-        query: input + ', Bangalore, India',
-        fields: ['geometry']
-      }, (places, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && places && places[0]) {
-          const loc = places[0].geometry.location;
-          // Then search nearby restaurants
-          service.nearbySearch({ location: loc, radius: 2500, type: ['restaurant'] }, (results, stat) => {
-            if (stat === google.maps.places.PlacesServiceStatus.OK && results.length) {
-              const selection = results.sort(() => 0.5 - Math.random()).slice(0,5);
+      geocoder.geocode({ address: query + ', Bangalore, India' }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+          const loc = results[0].geometry.location;
+          placesService.nearbySearch({ location: loc, radius: 2000, type: ['restaurant'] }, (places, ps) => {
+            if (ps === google.maps.places.PlacesServiceStatus.OK && places.length) {
+              const selection = places.sort(() => 0.5 - Math.random()).slice(0, 5);
               renderResults(selection);
-            } else if (stat === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+            } else if (ps === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
               displayError('No restaurants found.');
             } else {
-              displayError('Error: ' + stat);
+              displayError('Error: ' + ps);
             }
           });
+        } else if (status === 'ZERO_RESULTS') {
+          displayError('Location not found.');
         } else {
-          displayError('Location not found: ' + status);
+          displayError('Geocoding failed: ' + status);
         }
       });
     }
-    function renderResults(arr) {
+    function renderResults(list) {
       const container = document.getElementById('results');
       container.innerHTML = '';
-      arr.forEach(p => {
-        const card = document.createElement('div'); card.className = 'restaurant';
-        const h = document.createElement('h3'); h.textContent = p.name; card.appendChild(h);
-        if (p.vicinity) card.appendChild(Object.assign(document.createElement('p'), { textContent: p.vicinity }));
-        if (p.rating) card.appendChild(Object.assign(document.createElement('p'), { textContent: 'Rating: ' + p.rating + ' ★' }));
+      list.forEach(place => {
+        const card = document.createElement('div');
+        card.className = 'restaurant';
+        card.innerHTML = `<h3>${place.name}</h3>
+                          <p>${place.vicinity || ''}</p>
+                          ${place.rating? `<p>Rating: ${place.rating} ★</p>` : ''}`;
         container.appendChild(card);
       });
     }

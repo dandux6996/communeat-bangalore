@@ -1,111 +1,74 @@
-<!cgpt>
+<!perp>
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Restaurant Finder</title>
+  <title>Bangalore Restaurant Finder</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 2rem; }
-    #controls { margin-bottom: 1rem; }
-    #restaurant-list { list-style: none; padding: 0; }
-    #restaurant-list li { 
-      background: #f9f9f9; 
-      margin: .5rem 0; 
-      padding: .75rem; 
-      border-radius: 6px; 
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .error { color: red; }
+    body { font-family: Arial, sans-serif; margin: 40px;}
+    #results {margin-top: 20px;}
+    .restaurant {margin-bottom: 15px;}
   </style>
 </head>
 <body>
-  <div id="controls">
-    <input id="location-input" type="text" placeholder="Enter pincode or locality" size="40"/>
-    <button id="search-btn">Search</button>
-    <span id="status"></span>
-  </div>
-  <ul id="restaurant-list"></ul>
+  <h2>Bangalore Restaurant Finder</h2>
+  <label for="locationInput">Enter Pincode or Locality:</label>
+  <input type="text" id="locationInput" placeholder="Eg: 560001 or Indiranagar"/>
+  <button onclick="findRestaurants()">Search</button>
+  <div id="results"></div>
 
   <script>
-    let geocoder, placesService;
+    const apiKey = 'YOUR_GOOGLE_MAPS_API_KEY';
 
-    // Initialize when the Maps JS API loads
-    function initMap() {
-      geocoder = new google.maps.Geocoder();
-      // A dummy <div> is enough for PlacesService
-      placesService = new google.maps.places.PlacesService(document.createElement('div'));
-      document.getElementById('search-btn')
-              .addEventListener('click', onSearchClick);
-    }
-
-    function onSearchClick() {
-      const input = document.getElementById('location-input').value.trim();
-      const status = document.getElementById('status');
-      const listEl = document.getElementById('restaurant-list');
-      listEl.innerHTML = '';
-      status.textContent = '';
-      if (!input) {
-        status.textContent = 'Please enter something.';
-        status.className = 'error';
+    function findRestaurants() {
+      const location = document.getElementById('locationInput').value.trim();
+      if (!location) {
+        alert("Please enter a pincode or locality.");
         return;
       }
-      status.textContent = 'Geocoding...';
-      geocoder.geocode({ address: input }, (results, geocodeStatus) => {
-        if (geocodeStatus !== 'OK' || !results[0]) {
-          status.textContent = 'Could not find that location.';
-          status.className = 'error';
-          return;
-        }
-        const loc = results[0].geometry.location;
-        status.textContent = 'Searching for restaurants...';
-        findRestaurants(loc);
-      });
-    }
+      document.getElementById('results').innerText = 'Searching...';
 
-    function findRestaurants(location) {
-      // Search radius in meters
-      const request = {
-        location,
-        radius: 3000,
-        type: 'restaurant'
-      };
-      placesService.nearbySearch(request, (results, placesStatus) => {
-        const status = document.getElementById('status');
-        if (placesStatus !== 'OK' || !results || results.length === 0) {
-          status.textContent = 'No restaurants found nearby.';
-          status.className = 'error';
-          return;
-        }
-        // Shuffle & pick first 5
-        shuffleArray(results);
-        const top5 = results.slice(0, 5);
-        renderList(top5);
-        status.textContent = `Showing 5 random restaurants near you.`;
-        status.className = '';
-      });
+      // Step 1: Geocode to get lat/lng
+      fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)},Bangalore&key=${apiKey}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.status !== 'OK' || !data.results.length) {
+            document.getElementById('results').innerText = "Location not found. Try a valid pincode/locality.";
+            return;
+          }
+          const loc = data.results[0].geometry.location;
+          // Step 2: Nearby Search for restaurants
+          return fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${loc.lat},${loc.lng}&radius=2000&type=restaurant&key=${AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps}`);
+        })
+        .then(response => response ? response.json() : null)
+        .then(data => {
+          if (!data || data.status !== 'OK' || !data.results.length) {
+            document.getElementById('results').innerText = "No restaurants found in this area.";
+            return;
+          }
+          // Step 3: Pick 5 random restaurants
+          const restaurants = data.results;
+          const picked = [];
+          let used = {};
+          while (picked.length < 5 && picked.length < restaurants.length) {
+            let i = Math.floor(Math.random() * restaurants.length);
+            if (!used[i]) {
+              picked.push(restaurants[i]);
+              used[i] = true;
+            }
+          }
+          let html = `<h3>5 Restaurants in ${document.getElementById('locationInput').value}:</h3>`;
+          picked.forEach((rest, idx) => {
+            html += `<div class="restaurant">
+              <b>${idx+1}. ${rest.name}</b><br>
+              ${rest.vicinity || rest.formatted_address || "Address not available"}
+            </div>`;
+          });
+          document.getElementById('results').innerHTML = html;
+        })
+        .catch(error => {
+          document.getElementById('results').innerText = "Error fetching data. Please try again.";
+        });
     }
-
-    function renderList(restaurants) {
-      const listEl = document.getElementById('restaurant-list');
-      restaurants.forEach(place => {
-        const li = document.createElement('li');
-        li.innerHTML = `<strong>${place.name}</strong><br/>
-                        ${place.vicinity || place.formatted_address || ''}`;
-        listEl.appendChild(li);
-      });
-    }
-
-    // Fisher–Yates shuffle
-    function shuffleArray(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-    }
-  </script>
-  <script async
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap">
   </script>
 </body>
 </html>

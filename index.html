@@ -94,6 +94,7 @@
         <th>Restaurant Name</th>
         <th>Rating (out of 5)</th>
         <th>Number of Reviews</th>
+        <th>Address</th>
       </tr>
     </thead>
     <tbody>
@@ -153,23 +154,26 @@
           status.className = 'error';
           return;
         }
-        // Keep only those with a rating, then sort by rating and reviews
-        const withRatings = results
+        // Filter & sort by rating desc, then by review count
+        const top5 = results
           .filter(r => typeof r.rating === 'number')
           .sort((a, b) => {
             if (b.rating !== a.rating) return b.rating - a.rating;
             return (b.user_ratings_total || 0) - (a.user_ratings_total || 0);
-          });
-        const top5 = withRatings.slice(0, 5);
+          })
+          .slice(0, 5);
+
         top5.forEach(place => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>${place.name}</td>
             <td>${place.rating.toFixed(1)}</td>
             <td>${place.user_ratings_total || 0}</td>
+            <td>${place.vicinity || place.formatted_address || ''}</td>
           `;
           tbody.appendChild(tr);
         });
+
         status.textContent = `Showing top 5 ${cuisine || ''} restaurants by rating.`;
         status.className = '';
       });

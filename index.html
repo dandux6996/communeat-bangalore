@@ -21,18 +21,6 @@
     }
     h1 { font-size: 2.5rem; margin: 0; }
     .tagline { font-size: 1.2rem; margin: 0.5rem 0 0; }
-    .palette {
-      display: flex;
-      justify-content: center;
-      margin: 1rem 0;
-    }
-    .swatch {
-      width: 40px;
-      height: 40px;
-      margin: 0 0.5rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
     #controls {
       margin: 1.5rem auto;
       max-width: 800px;
@@ -80,11 +68,6 @@
   <div class="banner">
     <h1>Commun-EAT-y</h1>
     <p class="tagline">Discover flavor. Share belonging.</p>
-  </div>
-  <div class="palette">
-    <div class="swatch" style="background: var(--primary);"></div>
-    <div class="swatch" style="background: var(--secondary);"></div>
-    <div class="swatch" style="background: var(--accent);"></div>
   </div>
 
   <div id="controls">
@@ -212,8 +195,7 @@
             infoWindow.setContent(`<div><strong>${place.name}</strong><br/>${place.rating.toFixed(1)} out of 5<br/>`+
                                    `<a href="${mapsUrl}" target="_blank"><button class="map-btn">Open in Google Maps</button></a></div>`);
             infoWindow.open(map,marker);
-          });
-          markers.push(marker);
+          }); markers.push(marker);
         });
         status.textContent=`Showing top ${top5.length} restaurants by rating with >200 reviews.`; status.className='';
       });

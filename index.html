@@ -31,8 +31,10 @@
       border-radius: 6px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    .name { font-weight: bold; }
-    .rating { color: #555; }
+    .name { font-weight: bold; margin-bottom: 0.25rem; }
+    .stars { font-size: 1.1rem; color: #f5a623; } /* gold-ish stars */
+    .rating-info { margin-bottom: 0.25rem; color: #555; }
+    .address { color: #333; }
     .error { color: red; }
   </style>
 </head>
@@ -138,7 +140,7 @@
           status.className = 'error';
           return;
         }
-        // Filter out those without a rating, then sort by rating desc, then by number of ratings desc
+        // Keep only those with a rating, then sort by rating desc, then by number of reviews desc
         const withRatings = results.filter(r => typeof r.rating === 'number');
         withRatings.sort((a, b) => {
           if (b.rating !== a.rating) return b.rating - a.rating;
@@ -151,14 +153,23 @@
       });
     }
 
+    function getStars(rating) {
+      const rounded = Math.round(rating);
+      let stars = '';
+      for (let i = 0; i < rounded; i++) stars += '★';
+      for (let i = rounded; i < 5; i++) stars += '☆';
+      return stars;
+    }
+
     function renderList(restaurants) {
       const listEl = document.getElementById('restaurant-list');
       restaurants.forEach(place => {
         const li = document.createElement('li');
         li.innerHTML = `
           <div class="name">${place.name}</div>
-          <div class="rating">Rating: ${place.rating} 
-            ${place.user_ratings_total ? `(${place.user_ratings_total} reviews)` : ''}
+          <div class="stars">${getStars(place.rating)}</div>
+          <div class="rating-info">
+            ${place.rating.toFixed(1)} out of 5 &bull; ${place.user_ratings_total || 0} reviews
           </div>
           <div class="address">${place.vicinity || place.formatted_address || ''}</div>
         `;

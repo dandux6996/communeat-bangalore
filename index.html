@@ -15,28 +15,10 @@
       gap: 1rem;
       align-items: center;
     }
-    .input-group { position: relative; }
-    .input-group input {
+    #location-input {
       padding: 0.5rem;
       font-size: 1rem;
       width: 250px;
-    }
-    .suggestions {
-      position: absolute;
-      top: 100%; left: 0;
-      right: 0;
-      background: #fff;
-      border: 1px solid #ccc;
-      max-height: 200px;
-      overflow-y: auto;
-      z-index: 1000;
-    }
-    .suggestion-item {
-      padding: 0.5rem;
-      cursor: pointer;
-    }
-    .suggestion-item:hover {
-      background-color: #f0f0f0;
     }
     #controls select,
     #controls button {
@@ -71,14 +53,11 @@
   <p class="tagline">Discover flavor. Share belonging.</p>
 
   <div id="controls">
-    <div class="input-group">
-      <input
-        id="location-input"
-        type="text"
-        placeholder="Enter pincode or locality"
-      />
-      <div id="suggestions" class="suggestions" style="display:none;"></div>
-    </div>
+    <input
+      id="location-input"
+      type="text"
+      placeholder="Enter pincode or locality"
+    />
 
     <select id="cuisine-select">
       <option value="">Any cuisine</option>
@@ -144,66 +123,33 @@
   <div id="map"></div>
 
   <script>
-    let geocoder, placesService, autocompleteService, map, infoWindow, markers = [];
+    let geocoder, placesService, autocomplete, map, infoWindow, markers = [];
 
     function initMap() {
+      const bangaloreBounds = {
+        north: 13.139, south: 12.787,
+        east: 77.736, west: 77.455
+      };
+
       geocoder = new google.maps.Geocoder();
       placesService = new google.maps.places.PlacesService(document.createElement('div'));
-      autocompleteService = new google.maps.places.AutocompleteService();
       infoWindow = new google.maps.InfoWindow();
 
+      // Setup autocomplete restricted to Bangalore
+      const input = document.getElementById('location-input');
+      autocomplete = new google.maps.places.Autocomplete(input, {
+        bounds: bangaloreBounds,
+        strictBounds: true,
+        types: ['(regions)'],
+        componentRestrictions: { country: 'IN' }
+      });
+
       document.getElementById('search-btn')
-              .addEventListener('click', onSearchClick);
+        .addEventListener('click', onSearchClick);
 
       map = new google.maps.Map(document.getElementById('map'), {
         center: { lat: 12.9716, lng: 77.5946 },
         zoom: 12
-      });
-
-      const locInput = document.getElementById('location-input');
-      const suggestions = document.getElementById('suggestions');
-      let debounceTimer;
-
-      locInput.addEventListener('input', () => {
-        clearTimeout(debounceTimer);
-        const term = locInput.value.trim();
-        if (term.length < 3) {
-          suggestions.style.display = 'none';
-          return;
-        }
-        debounceTimer = setTimeout(() => {
-          autocompleteService.getPlacePredictions({
-            input: term,
-            types: ['(regions)'],
-            componentRestrictions: { country: 'IN', locality: 'Bengaluru' },
-            locationBias: new google.maps.Circle({
-              center: { lat: 12.9716, lng: 77.5946 }, radius: 20000
-            })
-          }, (preds, status) => {
-            if (status === google.maps.places.PlacesServiceStatus.OK && preds) {
-              preds = preds.filter(p =>
-                /\b(560\d{3}|[A-Za-z\s]+)\b/.test(p.terms.map(t=>t.value).join(' '))
-              ); // basic filter for Bangalore PIN codes/localities
-              preds.sort((a, b) => a.description.localeCompare(b.description));
-              suggestions.innerHTML = '';
-              preds.forEach(p => {
-                const item = document.createElement('div');
-                item.textContent = p.description;
-                item.className = 'suggestion-item';
-                item.addEventListener('click', () => {
-                  locInput.value = p.description;
-                  suggestions.style.display = 'none';
-                });
-                suggestions.appendChild(item);
-              });
-              suggestions.style.display = preds.length ? 'block' : 'none';
-            }
-          });
-        }, 300);
-      });
-
-      document.addEventListener('click', e => {
-        if (!locInput.contains(e.target)) suggestions.style.display = 'none';
       });
     }
 
@@ -217,8 +163,8 @@
     function onSearchClick() {
       const address = document.getElementById('location-input').value.trim();
       const cuisine = document.getElementById('cuisine-select').value;
-      const status  = document.getElementById('status');
-      const tbody   = document.querySelector('#restaurant-table tbody');
+      const status = document.getElementById('status');
+      const tbody = document.querySelector('#restaurant-table tbody');
       tbody.innerHTML = '';
       status.textContent = '';
 
@@ -245,7 +191,7 @@
 
       placesService.nearbySearch(request, (results, placesStatus) => {
         const status = document.getElementById('status');
-        const tbody  = document.querySelector('#restaurant-table tbody');
+        const tbody = document.querySelector('#restaurant-table tbody');
         if (placesStatus !== 'OK' || !results || !results.length) {
           status.textContent = 'No restaurants found.';
           status.className = 'error';
@@ -256,10 +202,7 @@
 
         const top5 = results
           .filter(r => typeof r.rating === 'number')
-          .sort((a, b) => {
-            if (b.rating !== a.rating) return b.rating - a.rating;
-            return (b.user_ratings_total || 0) - (a.user_ratings_total || 0);
-          })
+          .sort((a, b) => b.rating - a.rating || (b.user_ratings_total || 0) - (a.user_ratings_total || 0))
           .slice(0, 5);
 
         map.setCenter(location);
@@ -276,7 +219,7 @@
           tbody.appendChild(tr);
 
           const marker = new google.maps.Marker({
-            map: map,
+            map,
             position: place.geometry.location,
             title: place.name
           });
@@ -301,7 +244,7 @@
   </script>
 
   <script async
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places,geometry&callback=initMap">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap">
   </script>
 </body>
 </html>

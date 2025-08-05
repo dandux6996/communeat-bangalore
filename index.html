@@ -39,6 +39,9 @@
       width: 100%;
       margin-top: 1rem;
     }
+    a.restaurant-link { color: #1a73e8; text-decoration: none; }
+    a.restaurant-link:hover { text-decoration: underline; }
+    button.map-btn { padding: 0.3rem 0.6rem; font-size: 0.9rem; cursor: pointer; }
     .error { color: red; }
   </style>
 </head>
@@ -164,6 +167,13 @@
       });
     }
 
+    function focusMarker(index) {
+      const marker = markers[index];
+      map.panTo(marker.getPosition());
+      map.setZoom(16);
+      google.maps.event.trigger(marker, 'click');
+    }
+
     function onSearchClick() {
       const address = document.getElementById('location-input').value.trim();
       const cuisine = document.getElementById('cuisine-select').value;
@@ -218,10 +228,11 @@
         map.setCenter(location);
         map.setZoom(14);
 
-        top5.forEach(place => {
+        top5.forEach((place, i) => {
+          // Table row with hyperlink
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${place.name}</td>
+            <td><a href="javascript:void(0)" class="restaurant-link" onclick="focusMarker(${i})">${place.name}</a></td>
             <td>${place.rating.toFixed(1)}</td>
             <td>${place.user_ratings_total || 0}</td>
             <td>${place.vicinity || place.formatted_address || ''}</td>
@@ -235,11 +246,13 @@
             title: place.name
           });
           marker.addListener('click', () => {
-            const mapsUrl = `https://www.google.com/maps/search/?api=1&query_place_id=${place.place_id}`;
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
             infoWindow.setContent(
               `<div><strong>${place.name}</strong><br />${place.rating.toFixed(1)} out of 5<br />` +
-              `<a href="${mapsUrl}" target="_blank">` +
-              `<button>Open in Google Maps</button></a></div>`
+              `<a href=\"${mapsUrl}\" target=\"_blank\">` +
+              `<button class=\"map-btn\">Open in Google Maps</button></a></div>`
             );
             infoWindow.open(map, marker);
           });

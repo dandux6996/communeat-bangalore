@@ -61,6 +61,7 @@
 
     <select id="cuisine-select">
       <option value="">Any cuisine</option>
+      <!-- cuisine options -->
       <option>American</option>
       <option>Asian</option>
       <option>Bakery</option>
@@ -126,10 +127,7 @@
     let geocoder, placesService, autocomplete, map, infoWindow, markers = [];
 
     function initMap() {
-      const bangaloreBounds = {
-        north: 13.139, south: 12.787,
-        east: 77.736, west: 77.455
-      };
+      const bangaloreBounds = { north: 13.139, south: 12.787, east: 77.736, west: 77.455 };
 
       geocoder = new google.maps.Geocoder();
       placesService = new google.maps.places.PlacesService(document.createElement('div'));
@@ -144,13 +142,9 @@
         componentRestrictions: { country: 'IN' }
       });
 
-      document.getElementById('search-btn')
-        .addEventListener('click', onSearchClick);
+      document.getElementById('search-btn').addEventListener('click', onSearchClick);
 
-      map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 12.9716, lng: 77.5946 },
-        zoom: 12
-      });
+      map = new google.maps.Map(document.getElementById('map'), { center: { lat: 12.9716, lng: 77.5946 }, zoom: 12 });
     }
 
     function focusMarker(index) {
@@ -169,18 +163,14 @@
       status.textContent = '';
 
       if (!address) {
-        status.textContent = 'Please enter a pincode or locality.';
-        status.className = 'error';
-        return;
+        status.textContent = 'Please enter a pincode or locality.'; status.className = 'error'; return;
       }
       status.textContent = 'Geocoding...';
       geocoder.geocode({ address }, (results, geocodeStatus) => {
         if (geocodeStatus !== 'OK' || !results[0]) {
-          status.textContent = 'Could not find that location.';
-          status.className = 'error';
-          return;
+          status.textContent = 'Could not find that location.'; status.className = 'error'; return;
         }
-        status.textContent = 'Searching for top-rated restaurants...';
+        status.textContent = 'Searching for top-rated restaurants with >200 reviews...';
         findTopRated(results[0].geometry.location, cuisine);
       });
     }
@@ -193,58 +183,44 @@
         const status = document.getElementById('status');
         const tbody = document.querySelector('#restaurant-table tbody');
         if (placesStatus !== 'OK' || !results || !results.length) {
-          status.textContent = 'No restaurants found.';
-          status.className = 'error';
-          return;
+          status.textContent = 'No restaurants found.'; status.className = 'error'; return;
         }
-        markers.forEach(m => m.setMap(null));
-        markers = [];
+        markers.forEach(m => m.setMap(null)); markers = [];
 
-        const top5 = results
-          .filter(r => typeof r.rating === 'number')
-          .sort((a, b) => b.rating - a.rating || (b.user_ratings_total || 0) - (a.user_ratings_total || 0))
-          .slice(0, 5);
+        const filtered = results
+          .filter(r => typeof r.rating === 'number' && (r.user_ratings_total || 0) > 200)
+          .sort((a, b) => b.rating - a.rating || (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
+        const top5 = filtered.slice(0, 5);
 
-        map.setCenter(location);
-        map.setZoom(14);
+        map.setCenter(location); map.setZoom(14);
 
         top5.forEach((place, i) => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td><a href="javascript:void(0)" class="restaurant-link" onclick="focusMarker(${i})">${place.name}</a></td>
             <td>${place.rating.toFixed(1)}</td>
-            <td>${place.user_ratings_total || 0}</td>
+            <td>${place.user_ratings_total}</td>
             <td>${place.vicinity || place.formatted_address || ''}</td>
           `;
           tbody.appendChild(tr);
 
-          const marker = new google.maps.Marker({
-            map,
-            position: place.geometry.location,
-            title: place.name
-          });
+          const marker = new google.maps.Marker({ map, position: place.geometry.location, title: place.name });
           marker.addListener('click', () => {
-            const lat = place.geometry.location.lat();
-            const lng = place.geometry.location.lng();
+            const lat = place.geometry.location.lat(); const lng = place.geometry.location.lng();
             const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
             infoWindow.setContent(
               `<div><strong>${place.name}</strong><br />${place.rating.toFixed(1)} out of 5<br />` +
-              `<a href=\"${mapsUrl}\" target=\"_blank\">` +
-              `<button class=\"map-btn\">Open in Google Maps</button></a></div>`
+              `<a href="${mapsUrl}" target="_blank"><button class="map-btn">Open in Google Maps</button></a></div>`
             );
             infoWindow.open(map, marker);
-          });
-          markers.push(marker);
+          }); markers.push(marker);
         });
 
-        status.textContent = `Showing top 5 ${cuisine || ''} restaurants by rating.`;
-        status.className = '';
+        status.textContent = `Showing top ${top5.length} restaurants by rating with >200 reviews.`; status.className = '';
       });
     }
   </script>
 
-  <script async
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap">
-  </script>
+  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap"></script>
 </body>
 </html>

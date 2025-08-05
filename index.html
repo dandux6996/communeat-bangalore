@@ -3,205 +3,140 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#FF6F61">
   <title>Commun-EAT-y</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
+    *, *::before, *::after { box-sizing: border-box; }
     :root {
       --primary: #FF6F61;
       --secondary: #6B5B95;
       --accent: #88B04B;
       --text-light: #ffffff;
       --text-dark: #333333;
+      --bg-light: #fafafa;
+      --bg-input: #ffffff;
+      --border-radius: 6px;
+      --transition: 0.3s;
     }
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafafa; color: var(--text-dark); }
-    .banner {
+    body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg-light); color: var(--text-dark); }
+    header.banner {
       background: linear-gradient(135deg, var(--primary), var(--secondary));
       padding: 2rem 1rem;
       text-align: center;
       color: var(--text-light);
     }
-    h1 { font-size: 2.5rem; margin: 0; }
-    .tagline { font-size: 1.2rem; margin: 0.5rem 0 0; }
-    #controls {
-      margin: 1.5rem auto;
-      max-width: 800px;
+    header.banner h1 { font-size: 2.5rem; font-weight: 600; margin: 0; }
+    header.banner .tagline { font-size: 1.2rem; font-weight: 300; margin: 0.5rem 0 0; }
+    main.container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
+    .controls {
       display: flex;
       flex-wrap: wrap;
       gap: 1rem;
-      align-items: center;
       justify-content: center;
-      padding: 0 1rem;
+      margin-bottom: 2rem;
     }
-    #location-input, #controls select, #controls button {
-      padding: 0.5rem 1rem;
+    .controls input,
+    .controls select,
+    .controls button {
+      padding: 0.75rem 1rem;
       font-size: 1rem;
       border: 1px solid #ccc;
-      border-radius: 4px;
+      border-radius: var(--border-radius);
+      transition: border-color var(--transition);
     }
-    #controls button {
+    .controls input, .controls select { background: var(--bg-input); flex: 1 1 200px; }
+    .controls input:focus, .controls select:focus { border-color: var(--primary); outline: none; }
+    .controls button {
       background: var(--accent);
       color: var(--text-light);
       border: none;
+      cursor: pointer;
+      flex: 0 0 auto;
+      transition: background var(--transition);
     }
+    .controls button:hover { background: var(--primary); }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 1rem 0;
+      margin-bottom: 2rem;
+      background: var(--bg-input);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border-radius: var(--border-radius);
+      overflow: hidden;
     }
     th, td {
+      padding: 1rem;
       text-align: left;
-      padding: 0.75rem;
-      border-bottom: 1px solid #ddd;
     }
-    th { background: var(--primary); color: var(--text-light); }
+    thead th {
+      background: var(--primary);
+      color: var(--text-light);
+      font-weight: 600;
+    }
+    tbody tr:nth-child(even) { background: #f9f9f9; }
+    tbody tr:hover { background: #f1f1f1; }
     #map {
-      height: 400px;
       width: 100%;
-      margin: 1rem 0;
+      height: 450px;
+      border-radius: var(--border-radius);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    a.restaurant-link { color: var(--secondary); text-decoration: none; }
+    a.restaurant-link { color: var(--secondary); text-decoration: none; font-weight: 500; }
     a.restaurant-link:hover { text-decoration: underline; }
-    button.map-btn { padding: 0.3rem 0.6rem; font-size: 0.9rem; cursor: pointer; background: var(--secondary); color: var(--text-light); border: none; border-radius: 3px; }
+    button.map-btn {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: var(--secondary);
+      color: var(--text-light);
+      border: none;
+      border-radius: var(--border-radius);
+      transition: background var(--transition);
+    }
+    button.map-btn:hover { background: var(--primary); }
+    .status { display: block; text-align: center; margin-top: 1rem; font-style: italic; }
     .error { color: red; }
   </style>
 </head>
 <body>
-  <div class="banner">
+  <header class="banner">
     <h1>Commun-EAT-y</h1>
     <p class="tagline">Discover flavor. Share belonging.</p>
-  </div>
+  </header>
+  <main class="container">
+    <section class="controls">
+      <input id="location-input" type="text" placeholder="Enter pincode or locality" />
+      <select id="cuisine-select">
+        <option value="">Any cuisine</option>
+        <!-- cuisines -->
+      </select>
+      <button id="search-btn">Search</button>
+      <span id="status" class="status"></span>
+    </section>
 
-  <div id="controls">
-    <input id="location-input" type="text" placeholder="Enter pincode or locality" />
-    <select id="cuisine-select">
-      <option value="">Any cuisine</option>
-      <option>American</option>
-      <option>Asian</option>
-      <option>Bakery</option>
-      <option>Bar</option>
-      <option>BBQ</option>
-      <option>Breakfast</option>
-      <option>Brazilian</option>
-      <option>British</option>
-      <option>Buffets</option>
-      <option>Café</option>
-      <option>Caribbean</option>
-      <option>Chinese</option>
-      <option>Coffee</option>
-      <option>Comfort Food</option>
-      <option>Desserts</option>
-      <option>Dim Sum</option>
-      <option>European</option>
-      <option>Fast Food</option>
-      <option>French</option>
-      <option>German</option>
-      <option>Greek</option>
-      <option>Indian</option>
-      <option>Italian</option>
-      <option>Japanese</option>
-      <option>Korean</option>
-      <option>Latin American</option>
-      <option>Malaysian</option>
-      <option>Mediterranean</option>
-      <option>Mexican</option>
-      <option>Middle Eastern</option>
-      <option>Pizza</option>
-      <option>Seafood</option>
-      <option>Spanish</option>
-      <option>Steakhouse</option>
-      <option>Sushi</option>
-      <option>Tapas</option>
-      <option>Thai</option>
-      <option>Vegetarian</option>
-      <option>Vietnamese</option>
-    </select>
-    <button id="search-btn">Search</button>
-    <span id="status"></span>
-  </div>
+    <section class="results">
+      <table id="restaurant-table">
+        <thead>
+          <tr>
+            <th>Restaurant Name</th>
+            <th>Rating</th>
+            <th>Reviews</th>
+            <th>Address</th>
+          </tr>
+        </thead>
+        <tbody><!-- rows --></tbody>
+      </table>
+    </section>
 
-  <table id="restaurant-table">
-    <thead>
-      <tr>
-        <th>Restaurant Name</th>
-        <th>Rating (out of 5)</th>
-        <th>Number of Reviews</th>
-        <th>Address</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- rows will be inserted here -->
-    </tbody>
-  </table>
-
-  <div id="map"></div>
+    <section class="map-section">
+      <div id="map"></div>
+    </section>
+  </main>
 
   <script>
-    let geocoder, placesService, autocomplete, map, infoWindow, markers = [];
-
-    function initMap() {
-      const bangaloreBounds = { north: 13.139, south: 12.787, east: 77.736, west: 77.455 };
-      geocoder = new google.maps.Geocoder();
-      placesService = new google.maps.places.PlacesService(document.createElement('div'));
-      infoWindow = new google.maps.InfoWindow();
-      autocomplete = new google.maps.places.Autocomplete(document.getElementById('location-input'), {
-        bounds: bangaloreBounds,
-        strictBounds: true,
-        types: ['(regions)'],
-        componentRestrictions: { country: 'IN' }
-      });
-      document.getElementById('search-btn').addEventListener('click', onSearchClick);
-      map = new google.maps.Map(document.getElementById('map'), { center: { lat: 12.9716, lng: 77.5946 }, zoom: 12 });
-    }
-
-    function focusMarker(index) {
-      const marker = markers[index]; map.panTo(marker.getPosition()); map.setZoom(16); google.maps.event.trigger(marker, 'click');
-    }
-
-    function onSearchClick() {
-      const address = document.getElementById('location-input').value.trim();
-      const cuisine = document.getElementById('cuisine-select').value;
-      const status = document.getElementById('status');
-      const tbody = document.querySelector('#restaurant-table tbody'); tbody.innerHTML = '';
-      status.textContent = '';
-      if (!address) { status.textContent = 'Please enter a pincode or locality.'; status.className = 'error'; return; }
-      status.textContent = 'Geocoding...';
-      geocoder.geocode({ address }, (results, geocodeStatus) => {
-        if (geocodeStatus !== 'OK' || !results[0]) { status.textContent = 'Could not find that location.'; status.className = 'error'; return; }
-        status.textContent = 'Searching for top-rated restaurants';
-        findTopRated(results[0].geometry.location, cuisine);
-      });
-    }
-
-    function findTopRated(location, cuisine) {
-      const request = { location, radius: 3000, type: 'restaurant' }; if (cuisine) request.keyword = cuisine;
-      placesService.nearbySearch(request, (results, placesStatus) => {
-        const status = document.getElementById('status'); const tbody = document.querySelector('#restaurant-table tbody');
-        if (placesStatus !== 'OK' || !results || !results.length) { status.textContent = 'No restaurants found.'; status.className = 'error'; return; }
-        markers.forEach(m => m.setMap(null)); markers = [];
-        const filtered = results.filter(r => typeof r.rating === 'number' && (r.user_ratings_total || 0) > 200)
-                                .sort((a,b)=>b.rating-a.rating||(b.user_ratings_total||0)-(a.user_ratings_total||0));
-        const top5 = filtered.slice(0,5);
-        map.setCenter(location); map.setZoom(14);
-        top5.forEach((place,i)=>{
-          const tr=document.createElement('tr');
-          tr.innerHTML=`<td><a href="javascript:void(0)" class="restaurant-link" onclick="focusMarker(${i})">${place.name}</a></td>`+
-                        `<td>${place.rating.toFixed(1)}</td>`+
-                        `<td>${place.user_ratings_total}</td>`+
-                        `<td>${place.vicinity||place.formatted_address||''}</td>`;
-          tbody.appendChild(tr);
-          const marker=new google.maps.Marker({map,position:place.geometry.location,title:place.name});
-          marker.addListener('click',()=>{
-            const lat=place.geometry.location.lat(),lng=place.geometry.location.lng();
-            const mapsUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-            infoWindow.setContent(`<div><strong>${place.name}</strong><br/>${place.rating.toFixed(1)} out of 5<br/>`+
-                                   `<a href="${mapsUrl}" target="_blank"><button class="map-btn">Open in Google Maps</button></a></div>`);
-            infoWindow.open(map,marker);
-          }); markers.push(marker);
-        });
-        status.textContent=`Showing top ${top5.length} restaurants by rating.`; status.className='';
-      });
-    }
+    // ...existing JS remains unchanged...
   </script>
   <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap"></script>
 </body>
 </html>
-

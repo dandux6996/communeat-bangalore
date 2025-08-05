@@ -1,228 +1,138 @@
-<!perp>
+<!chatgpt_gAPI>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Commun-Eat-Y - Restaurant Finder</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Communeat Bangalore</title>
+  <meta name="description" content="Explore restaurants in Bangalore under Collection and Community categories.">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --primary-color: #D72638;
+      --accent-color: #FFFFFF;
+      --neutral-color: #2E2E2E;
+      --bg-color: #FFF7F0;
+      --text-color: var(--neutral-color);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
     body {
-      font-family: 'Poppins', sans-serif;
       margin: 0;
-      background: #FFF7F0;
-      color: #2E2E2E;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
     }
     header {
-      background: url('https://myloveofbaking.com/wp-content/uploads/2023/06/IMG_9500.jpg') center/cover no-repeat;
-      color: white;
-      text-align: center;
-      padding: 6rem 1rem 2.5rem;
       position: relative;
+      background: url('https://myloveofbaking.com/wp-content/uploads/2023/06/IMG_9500.jpg') center/cover no-repeat;
+      color: var(--accent-color);
+      text-align: center;
+      padding: 8rem 1rem 3rem;
+      min-height: 400px;
     }
     header::after {
-      content: "";
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      z-index: 0;
+      content: '';
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 0;
     }
-    header h1, header p {
-      position: relative;
-      z-index: 1;
-      margin: 0;
+    header h1, header p { position: relative; z-index: 1; margin: 0; }
+    header h1 { font-size: 3rem; font-weight: 700; }
+    .tagline { margin-top: 0.5rem; font-size: 1.25rem; font-weight: 300; }
+    main { max-width: 880px; margin: 2rem auto; padding: 0 1rem; }
+    .categories { display: flex; justify-content: center; gap: 2rem; margin-bottom: 1.5rem; }
+    .categories h2 { margin: 0; font-weight: 500; cursor: pointer; color: var(--neutral-color); transition: color 0.3s; }
+    .categories h2:hover { color: var(--primary-color); }
+    .search-section { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
+    .search-section input {
+      flex: 1; padding: 0.75rem; font-size: 1rem;
+      border: 2px solid var(--neutral-color); border-radius: 4px;
+      transition: border-color 0.3s;
     }
-    .tagline {
-      margin-top: 1rem;
-      font-weight: 300;
-      font-size: 1.5rem;
+    .search-section input:focus { outline: none; border-color: var(--primary-color); }
+    .search-section button {
+      padding: 0.75rem 1.5rem; font-size: 1rem; border: none;
+      background: var(--primary-color); color: var(--accent-color);
+      border-radius: 4px; cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
     }
-    main {
-      flex: 1;
-      max-width: 880px;
-      margin: 2rem auto 3rem;
-      padding: 0 1rem;
-    }
-    .input-section {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 2rem;
-    }
-    .input-section input {
-      flex: 1;
-      padding: 1rem;
-      font-size: 1rem;
-      border: 2px solid #2E2E2E;
-      border-radius: 4px;
-      outline-offset: 2px;
-    }
-    .input-section input:focus {
-      border-color: #D72638;
-      outline: none;
-    }
-    .input-section button {
-      padding: 1rem 2rem;
-      font-size: 1rem;
-      background: #D72638;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-    .input-section button:hover {
-      background: #b41c2d;
-    }
-    #results {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1rem;
-    }
+    .search-section button:hover { background: #b41c2d; transform: translateY(-2px); }
+    #results { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 1rem; margin-bottom: 2rem; }
     .restaurant {
-      background: white;
-      border-radius: 8px;
-      padding: 1.25rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      transition: transform 0.15s ease;
-      color: #2E2E2E;
+      background: var(--accent-color); padding: 1rem;
+      border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
     }
-    .restaurant:hover {
-      transform: translateY(-5px);
-    }
-    .restaurant h3 {
-      margin: 0 0 0.5rem 0;
-      font-size: 1.25rem;
-    }
-    .restaurant p {
-      margin: 0.25rem 0;
-      font-size: 1rem;
-      line-height: 1.2;
-    }
-    .error-message {
-      color: red;
-      font-weight: 600;
-      text-align: center;
-      grid-column: 1 / -1;
-    }
-    @media (max-width: 768px) {
-      header {
-        padding: 3rem 1rem 1.5rem;
-      }
-      header h1 {
-        font-size: 2.2rem;
-      }
-    }
+    .restaurant:hover { transform: translateY(-4px); }
+    .restaurant h3 { margin: 0 0 0.5rem; font-size: 1.1rem; color: var(--primary-color); }
+    .restaurant p { margin: 0.25rem 0; font-size: 0.9rem; }
+    .error { grid-column: 1 / -1; color: red; text-align: center; }
   </style>
+  <script>
+    let service;
+    function init() {
+      // Initialize PlacesService with dummy map div
+      const dummyMap = document.createElement('div');
+      service = new google.maps.places.PlacesService(dummyMap);
+    }
+    function displayError(msg) {
+      document.getElementById('results').innerHTML = `<p class="error">${msg}</p>`;
+    }
+    function searchByLocation() {
+      const input = document.getElementById('location').value.trim();
+      if (!input) return displayError('Please enter a Bangalore pincode or locality.');
+      displayError('Searching...');
+      // First find the city/place geometry
+      service.findPlaceFromQuery({
+        query: input + ', Bangalore, India',
+        fields: ['geometry']
+      }, (places, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && places && places[0]) {
+          const loc = places[0].geometry.location;
+          // Then search nearby restaurants
+          service.nearbySearch({ location: loc, radius: 2500, type: ['restaurant'] }, (results, stat) => {
+            if (stat === google.maps.places.PlacesServiceStatus.OK && results.length) {
+              const selection = results.sort(() => 0.5 - Math.random()).slice(0,5);
+              renderResults(selection);
+            } else if (stat === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+              displayError('No restaurants found.');
+            } else {
+              displayError('Error: ' + stat);
+            }
+          });
+        } else {
+          displayError('Location not found: ' + status);
+        }
+      });
+    }
+    function renderResults(arr) {
+      const container = document.getElementById('results');
+      container.innerHTML = '';
+      arr.forEach(p => {
+        const card = document.createElement('div'); card.className = 'restaurant';
+        const h = document.createElement('h3'); h.textContent = p.name; card.appendChild(h);
+        if (p.vicinity) card.appendChild(Object.assign(document.createElement('p'), { textContent: p.vicinity }));
+        if (p.rating) card.appendChild(Object.assign(document.createElement('p'), { textContent: 'Rating: ' + p.rating + ' ★' }));
+        container.appendChild(card);
+      });
+    }
+  </script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=init"></script>
 </head>
 <body>
   <header>
-    <h1>Commun-Eat-Y</h1>
+    <h1>Communeat Bangalore</h1>
     <p class="tagline">Discover flavor. Share belonging.</p>
   </header>
   <main>
-    <div class="input-section">
-      <input type="text" id="locationInput" placeholder="Enter Bangalore pincode or locality" aria-label="Enter Bangalore pincode or locality" />
-      <button id="searchButton" type="button">Find 5 Random Restaurants</button>
+    <div class="categories">
+      <h2>Collection</h2>
+      <h2>Community</h2>
     </div>
-    <div id="results"></div>
+    <section class="search-section">
+      <input id="location" type="text" placeholder="Enter Bangalore pincode or locality">
+      <button onclick="searchByLocation()">Find 5 Random Restaurants</button>
+    </section>
+    <section id="results"></section>
   </main>
-  <script>
-    // Geoapify API key (replace YOUR_GEOAPIFY_API_KEY with your valid key)
-    const GEOAPIFY_API_KEY = 'YOUR_GEOAPIFY_API_KEY';
-
-    const searchButton = document.getElementById('searchButton');
-    const locationInput = document.getElementById('locationInput');
-    const resultsContainer = document.getElementById('results');
-
-    function clearResults() {
-      resultsContainer.innerHTML = '';
-    }
-
-    function showError(message) {
-      clearResults();
-      const errorEl = document.createElement('p');
-      errorEl.className = 'error-message';
-      errorEl.textContent = message;
-      resultsContainer.appendChild(errorEl);
-    }
-
-    function createRestaurantCard(restaurant) {
-      const div = document.createElement('div');
-      div.className = 'restaurant';
-      const name = restaurant.name || 'Unnamed Restaurant';
-      const address = restaurant.address_line1 || restaurant.address || '';
-      const rating = restaurant.rate || restaurant.rating || null;
-
-      div.innerHTML = `
-        <h3>${name}</h3>
-        <p>${address}</p>
-        ${rating ? `<p>Rating: ${rating} ★</p>` : ''}
-      `;
-      return div;
-    }
-
-    async function locateAndShowRestaurants() {
-      const location = locationInput.value.trim();
-      clearResults();
-
-      if (!location) {
-        showError('Please enter a Bangalore pincode or locality.');
-        return;
-      }
-
-      try {
-        // Forward Geocode to get lat/lon
-        const geocodeUrl = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(location + ', Bangalore, India')}&apiKey=${GEOAPIFY_API_KEY}`;
-
-        const geoResponse = await fetch(geocodeUrl);
-        if (!geoResponse.ok) {
-          throw new Error('Failed to geocode location.');
-        }
-        const geoData = await geoResponse.json();
-
-        if (!geoData.features || geoData.features.length === 0) {
-          showError('Could not find your location. Please enter a valid Bangalore pincode or locality.');
-          return;
-        }
-
-        const { lat, lon } = geoData.features[0].properties;
-
-        // Define bounding box around the location to search restaurants (approx 2km x 2km box)
-        // bbox param format: left,bottom,right,top -> left = lon-0.02, bottom = lat-0.02, right = lon+0.02, top = lat+0.02
-        const bbox = `${lon - 0.02},${lat - 0.02},${lon + 0.02},${lat + 0.02}`;
-
-        const restaurantsUrl = `https://api.geoapify.com/v2/places?categories=catering.restaurant&filter=rect:${bbox}&limit=10&apiKey=${586ca97c3afc4e8b9dcb5bd4fc149cc2}`;
-
-        const resResponse = await fetch(restaurantsUrl);
-        if (!resResponse.ok) {
-          throw new Error('Failed to fetch restaurants.');
-        }
-        const resData = await resResponse.json();
-
-        const restaurants = resData.features || [];
-
-        if (restaurants.length === 0) {
-          showError('No restaurants found near this location.');
-          return;
-        }
-
-        // Pick up to 5 random restaurants
-        const selected = restaurants.sort(() => 0.5 - Math.random()).slice(0, 5);
-
-        clearResults();
-        selected.forEach(r => {
-          resultsContainer.appendChild(createRestaurantCard(r.properties));
-        });
-
-      } catch (error) {
-        showError(error.message);
-        console.error(error);
-      }
-    }
-
-    searchButton.addEventListener('click', locateAndShowRestaurants);
-  </script>
 </body>
 </html>

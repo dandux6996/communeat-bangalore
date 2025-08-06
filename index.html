@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -36,9 +35,7 @@
       justify-content: center;
       margin-bottom: 2rem;
     }
-    .controls input,
-    .controls select,
-    .controls button {
+    .controls input, .controls select, .controls button {
       padding: 0.75rem 1rem;
       font-size: 1rem;
       border: 1px solid #ccc;
@@ -52,7 +49,6 @@
       color: var(--text-light);
       border: none;
       cursor: pointer;
-      flex: 0 0 auto;
       transition: background var(--transition);
     }
     .controls button:hover { background: var(--primary); }
@@ -75,9 +71,7 @@
       color: var(--text-light);
       font-weight: 600;
     }
-    /* Reduce address column width */
     .address-col { width: 20%; }
-    .details-col { width: 30%; }
     tbody tr:nth-child(even) { background: #f9f9f9; }
     tbody tr:hover { background: #f1f1f1; }
     #map {
@@ -86,8 +80,9 @@
       border-radius: var(--border-radius);
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    a.restaurant-link { color: var(--secondary); text-decoration: none; font-weight: 500; }
-    a.restaurant-link:hover { text-decoration: underline; }
+    .restaurant-link { color: var(--secondary); text-decoration: none; font-weight: 500; display: block; }
+    .restaurant-link:hover { text-decoration: underline; }
+    .overview { font-size: 0.9rem; margin-top: 0.5rem; color: #555; }
     a.menu-link {
       background: var(--secondary);
       color: var(--text-light);
@@ -96,11 +91,11 @@
       text-decoration: none;
       font-size: 0.9rem;
       transition: background var(--transition);
+      display: inline-block;
     }
     a.menu-link:hover { background: var(--primary); }
     .status { display: block; text-align: center; margin-top: 1rem; font-style: italic; }
     .error { color: red; }
-    .must-try { font-weight: 600; margin-top: 0.5rem; }
   </style>
 </head>
 <body>
@@ -155,30 +150,26 @@
       </select>
       <button id="search-btn">Search</button>
       <span id="status" class="status"></span>
-    </section>
+    </section><section class="results">
+  <table id="restaurant-table">
+    <thead>
+      <tr>
+        <th>Restaurant</th>
+        <th>Rating</th>
+        <th>Reviews</th>
+        <th class="address-col">Address</th>
+        <th>Menu</th>
+      </tr>
+    </thead>
+    <tbody> <!-- rows will be inserted here --> </tbody>
+  </table>
+</section>
 
-    <section class="results">
-      <table id="restaurant-table">
-        <thead>
-          <tr>
-            <th>Restaurant Name</th>
-            <th>Rating</th>
-            <th>Reviews</th>
-            <th class="address-col">Address</th>
-            <th>Menu</th>
-            <th class="details-col">Details</th>
-          </tr>
-        </thead>
-        <tbody> <!-- rows will be inserted here --> </tbody>
-      </table>
-    </section>
+<section class="map-section">
+  <div id="map"></div>
+</section>
 
-    <section class="map-section">
-      <div id="map"></div>
-    </section>
-  </main>
-
-  <script>
+  </main>  <script>
     let geocoder, placesService, autocomplete, map, infoWindow, markers = [];
 
     function initMap() {
@@ -236,9 +227,7 @@
           statusEl.className = 'status error';
           return;
         }
-        // Clear markers
         markers.forEach(m => m.setMap(null)); markers = [];
-        // Filter & sort
         const filtered = results
           .filter(r => typeof r.rating === 'number' && (r.user_ratings_total || 0) > 200)
           .sort((a, b) => b.rating - a.rating || (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
@@ -248,17 +237,14 @@
         top5.forEach((place, i) => {
           const tr = document.createElement('tr');
           const menuUrl = `https://www.google.com/maps/search/?api=1&query=menu&query_place_id=${place.place_id}`;
-          // Create Details cell placeholder
           tr.innerHTML =
-            `<td><a href=\"javascript:void(0)\" class=\"restaurant-link\" onclick=\"focusMarker(${i})\">${place.name}</a></td>` +
+            `<td><a href=\"javascript:void(0)\" class=\"restaurant-link\" onclick=\"focusMarker(${i})\">${place.name}</a><div class=\"overview\">Loading overview...</div></td>` +
             `<td>${place.rating.toFixed(1)}</td>` +
             `<td>${place.user_ratings_total}</td>` +
             `<td class=\"address-col\">${place.vicinity || place.formatted_address || ''}</td>` +
-            `<td><a href=\"${menuUrl}\" class=\"menu-link\" target=\"_blank\">View Menu</a></td>` +
-            `<td class=\"details-col\">Loading details...</td>`;
+            `<td><a href=\"${menuUrl}\" class=\"menu-link\" target=\"_blank\">View Menu</a></td>`;
           tbody.appendChild(tr);
 
-          // Marker
           const marker = new google.maps.Marker({ map, position: place.geometry.location, title: place.name });
           marker.addListener('click', () => {
             const lat = place.geometry.location.lat(), lng = place.geometry.location.lng();
@@ -271,42 +257,12 @@
           });
           markers.push(marker);
 
-          // Fetch details for overview & must-try
-          placesService.getDetails({ placeId: place.place_id, fields: ['editorial_summary','reviews'] }, (detail, dStatus) => {
-            const cell = tr.querySelector('.details-col');
-            cell.textContent = '';
-            // Overview
+          placesService.getDetails({ placeId: place.place_id, fields: ['editorial_summary'] }, (detail, dStatus) => {
+            const ovEl = tr.querySelector('.overview');
             if (dStatus === google.maps.places.PlacesServiceStatus.OK && detail.editorial_summary && detail.editorial_summary.overview) {
-              const ov = document.createElement('p');
-              ov.textContent = detail.editorial_summary.overview;
-              cell.appendChild(ov);
+              ovEl.textContent = detail.editorial_summary.overview;
             } else {
-              const noOv = document.createElement('p');
-              noOv.textContent = 'Overview not available';
-              cell.appendChild(noOv);
-            }
-            // Must Try
-            const mustTry = document.createElement('div');
-            mustTry.className = 'must-try';
-            mustTry.textContent = 'Must Try:';
-            cell.appendChild(mustTry);
-            if (dStatus === google.maps.places.PlacesServiceStatus.OK && detail.reviews && detail.reviews.length) {
-              // Filter reviews with food aspects
-              const foodSnippets = detail.reviews
-                .filter(r => r.aspects && r.aspects.some(a => a.type === 'food'))
-                .slice(0, 3)
-                .map(r => r.text);
-              if (foodSnippets.length) {
-                foodSnippets.forEach(text => {
-                  const p = document.createElement('p');
-                  p.textContent = text;
-                  cell.appendChild(p);
-                });
-              } else {
-                const none = document.createElement('p'); none.textContent = 'No key food snippets'; cell.appendChild(none);
-              }
-            } else {
-              const none = document.createElement('p'); none.textContent = 'No reviews available'; cell.appendChild(none);
+              ovEl.textContent = 'Overview not available';
             }
           });
         });
@@ -316,7 +272,5 @@
     }
 
     window.initMap = initMap;
-  </script>
-  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap"></script>
-</body>
+  </script>  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap"></script></body>
 </html>

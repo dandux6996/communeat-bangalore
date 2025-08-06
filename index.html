@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="theme-color" content="#FF6F61">
-  <title>Commun-EAT-y</title>
+  <title>Commun-EAT-y</n  </title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; }
@@ -85,21 +85,18 @@
     }
     a.restaurant-link { color: var(--secondary); text-decoration: none; font-weight: 500; }
     a.restaurant-link:hover { text-decoration: underline; }
-    button.map-btn {
-      padding: 0.5rem 0.75rem;
-      font-size: 0.9rem;
-      cursor: pointer;
+    a.menu-link {
       background: var(--secondary);
       color: var(--text-light);
-      border: none;
+      padding: 0.5rem 0.75rem;
       border-radius: var(--border-radius);
+      text-decoration: none;
+      font-size: 0.9rem;
       transition: background var(--transition);
     }
-    button.map-btn:hover { background: var(--primary); }
+    a.menu-link:hover { background: var(--primary); }
     .status { display: block; text-align: center; margin-top: 1rem; font-style: italic; }
     .error { color: red; }
-    /* Place Details component styling overrides */
-    map-places-details { width: 100%; height: auto; --md-card-width: 280px; margin: 0.5rem 0; }
   </style>
 </head>
 <body>
@@ -167,7 +164,7 @@
             <th>Menu</th>
           </tr>
         </thead>
-        <tbody> <!-- rows will be inserted here --></tbody>
+        <tbody> <!-- rows will be inserted here --> </tbody>
       </table>
     </section>
 
@@ -176,7 +173,7 @@
     </section>
   </main>
 
-  <script type="module">
+  <script>
     let geocoder, placesService, autocomplete, map, infoWindow, markers = [];
 
     function initMap() {
@@ -223,7 +220,7 @@
       });
     }
 
-    async function findTopRated(location, cuisine) {
+    function findTopRated(location, cuisine) {
       const request = { location, radius: 3000, type: 'restaurant' };
       if (cuisine) request.keyword = cuisine;
       placesService.nearbySearch(request, (results, status) => {
@@ -235,21 +232,22 @@
           return;
         }
         markers.forEach(m => m.setMap(null)); markers = [];
-        const filtered = results.filter(r => typeof r.rating === 'number' && (r.user_ratings_total || 0) > 200)
-                                .sort((a, b) => b.rating - a.rating || (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
+        const filtered = results
+          .filter(r => typeof r.rating === 'number' && (r.user_ratings_total || 0) > 200)
+          .sort((a, b) => b.rating - a.rating || (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
         const top5 = filtered.slice(0, 5);
         map.setCenter(location); map.setZoom(14);
 
         top5.forEach((place, i) => {
           const tr = document.createElement('tr');
+          const menuUrl = `https://www.google.com/maps/search/?api=1&query=menu&query_place_id=${place.place_id}`;
           tr.innerHTML =
             `<td><a href="javascript:void(0)" class="restaurant-link" onclick="focusMarker(${i})">${place.name}</a></td>` +
             `<td>${place.rating.toFixed(1)}</td>` +
             `<td>${place.user_ratings_total}</td>` +
             `<td>${place.vicinity || place.formatted_address || ''}</td>` +
-            `<td><map-places-details place-id="${place.place_id}" tabs="menu"></map-places-details></td>`;
+            `<td><a href="${menuUrl}" class="menu-link" target="_blank">View Menu</a></td>`;
           tbody.appendChild(tr);
-
           const marker = new google.maps.Marker({ map, position: place.geometry.location, title: place.name });
           marker.addListener('click', () => {
             const lat = place.geometry.location.lat(); const lng = place.geometry.location.lng();
@@ -266,6 +264,6 @@
 
     window.initMap = initMap;
   </script>
-  <script async type="module" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places,place-details&callback=initMap"></script>
+  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap"></script>
 </body>
 </html>

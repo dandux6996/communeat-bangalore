@@ -68,6 +68,7 @@
     th, td {
       padding: 1rem;
       text-align: left;
+      vertical-align: top;
     }
     thead th {
       background: var(--primary);
@@ -97,6 +98,8 @@
     button.map-btn:hover { background: var(--primary); }
     .status { display: block; text-align: center; margin-top: 1rem; font-style: italic; }
     .error { color: red; }
+    /* Place Details component styling overrides if needed */
+    map-places-details { width: 100%; height: auto; --md-card-width: 280px; margin: 0.5rem 0; }
   </style>
 </head>
 <body>
@@ -161,6 +164,7 @@
             <th>Rating</th>
             <th>Reviews</th>
             <th>Address</th>
+            <th>Menu</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -172,7 +176,7 @@
     </section>
   </main>
 
-  <script>
+  <script type="module">
     let geocoder, placesService, autocomplete, map, infoWindow, markers = [];
 
     function initMap() {
@@ -219,37 +223,51 @@
       });
     }
 
-    function findTopRated(location, cuisine) {
-      const request = { location, radius: 3000, type: 'restaurant' }; if (cuisine) request.keyword = cuisine;
-      placesService.nearbySearch(request, (results, status) => {
-        const statusEl = document.getElementById('status'); const tbody = document.querySelector('#restaurant-table tbody');
-        if (status !== 'OK' || !results || !results.length) { statusEl.textContent = 'No restaurants found.'; statusEl.className = 'status error'; return; }
+    async function findTopRated(location, cuisine) {
+      const request = { location, radius: 3000, type: 'restaurant' };
+      if (cuisine) request.keyword = cuisine;
+      placesService.nearbySearch(request, async (results, status) => {
+        const statusEl = document.getElementById('status');
+        const tbody = document.querySelector('#restaurant-table tbody');
+        if (status !== 'OK' || !results || !results.length) {
+          statusEl.textContent = 'No restaurants found.';
+          statusEl.className = 'status error';
+          return;
+        }
         markers.forEach(m => m.setMap(null)); markers = [];
         const filtered = results.filter(r => typeof r.rating === 'number' && (r.user_ratings_total || 0) > 200)
                                 .sort((a, b) => b.rating - a.rating || (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
         const top20 = filtered.slice(0, 20);
         map.setCenter(location); map.setZoom(14);
-        top20.forEach((place, i) => {
+
+        for (let i = 0; i < top20.length; i++) {
+          const place = top20[i];
           const tr = document.createElement('tr');
           tr.innerHTML =
-            `<td><a href="javascript:void(0)" class="restaurant-link" onclick="focusMarker(${i})">${place.name}</a></td>` +
+            `<td><a href=\"javascript:void(0)\" class=\"restaurant-link\" onclick=\"focusMarker(${i})\">${place.name}</a></td>` +
             `<td>${place.rating.toFixed(1)}</td>` +
             `<td>${place.user_ratings_total}</td>` +
-            `<td>${place.vicinity || place.formatted_address || ''}</td>`;
+            `<td>${place.vicinity || place.formatted_address || ''}</td>` +
+            `<td><map-places-details place-id=\"${place.place_id}\"></map-places-details></td>`;
           tbody.appendChild(tr);
+
           const marker = new google.maps.Marker({ map, position: place.geometry.location, title: place.name });
           marker.addListener('click', () => {
             const lat = place.geometry.location.lat(); const lng = place.geometry.location.lng();
             const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
             infoWindow.setContent(`<div><strong>${place.name}</strong><br/>${place.rating.toFixed(1)} out of 5<br/>` +
-                                  `<a href="${mapsUrl}" target="_blank"><button class="map-btn">Open in Google Maps</button></a></div>`);
+                                  `<a href=\"${mapsUrl}\" target=\"_blank\"><button class=\"map-btn\">Open in Google Maps</button></a></div>`);
             infoWindow.open(map,marker);
-          }); markers.push(marker);
-        });
-        statusEl.textContent = `Showing top ${top20.length} restaurants by rating with >200 reviews.`; statusEl.className='status';
+          });
+          markers.push(marker);
+        }
+        statusEl.textContent = `Showing top ${top20.length} restaurants by rating with >200 reviews.`;
+        statusEl.className = 'status';
       });
     }
+
+    window.initMap = initMap;
   </script>
-  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap"></script>
+  <script async type="module" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places,place-details&callback=initMap"></script>
 </body>
 </html>

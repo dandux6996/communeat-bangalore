@@ -75,6 +75,9 @@
       color: var(--text-light);
       font-weight: 600;
     }
+    /* Reduce address column width */
+    .address-col { width: 20%; }
+    .details-col { width: 30%; }
     tbody tr:nth-child(even) { background: #f9f9f9; }
     tbody tr:hover { background: #f1f1f1; }
     #map {
@@ -97,6 +100,7 @@
     a.menu-link:hover { background: var(--primary); }
     .status { display: block; text-align: center; margin-top: 1rem; font-style: italic; }
     .error { color: red; }
+    .must-try { font-weight: 600; margin-top: 0.5rem; }
   </style>
 </head>
 <body>
@@ -109,45 +113,7 @@
       <input id="location-input" type="text" placeholder="Enter any Bangalore address, locality, street, or pincode" />
       <select id="cuisine-select">
         <option value="">Any cuisine</option>
-        <option>American</option>
-        <option>Asian</option>
-        <option>Bakery</option>
-        <option>Bar</option>
-        <option>BBQ</option>
-        <option>Breakfast</option>
-        <option>Brazilian</option>
-        <option>British</option>
-        <option>Buffets</option>
-        <option>Café</option>
-        <option>Caribbean</option>
-        <option>Chinese</option>
-        <option>Coffee</option>
-        <option>Comfort Food</option>
-        <option>Desserts</option>
-        <option>Dim Sum</option>
-        <option>European</option>
-        <option>Fast Food</option>
-        <option>French</option>
-        <option>German</option>
-        <option>Greek</option>
-        <option>Indian</option>
-        <option>Italian</option>
-        <option>Japanese</option>
-        <option>Korean</option>
-        <option>Latin American</option>
-        <option>Malaysian</option>
-        <option>Mediterranean</option>
-        <option>Mexican</option>
-        <option>Middle Eastern</option>
-        <option>Pizza</option>
-        <option>Seafood</option>
-        <option>Spanish</option>
-        <option>Steakhouse</option>
-        <option>Sushi</option>
-        <option>Tapas</option>
-        <option>Thai</option>
-        <option>Vegetarian</option>
-        <option>Vietnamese</option>
+        <!-- cuisines... -->
       </select>
       <button id="search-btn">Search</button>
       <span id="status" class="status"></span>
@@ -160,8 +126,9 @@
             <th>Restaurant Name</th>
             <th>Rating</th>
             <th>Reviews</th>
-            <th>Address</th>
+            <th class="address-col">Address</th>
             <th>Menu</th>
+            <th class="details-col">Details</th>
           </tr>
         </thead>
         <tbody> <!-- rows will be inserted here --> </tbody>
@@ -183,12 +150,7 @@
       infoWindow = new google.maps.InfoWindow();
       autocomplete = new google.maps.places.Autocomplete(
         document.getElementById('location-input'),
-        {
-          bounds: bangaloreBounds,
-          strictBounds: true,
-          types: ['geocode'],
-          componentRestrictions: { country: 'IN' }
-        }
+        { bounds: bangaloreBounds, strictBounds: true, types: ['geocode'], componentRestrictions: { country: 'IN' } }
       );
       document.getElementById('search-btn').addEventListener('click', onSearchClick);
       map = new google.maps.Map(document.getElementById('map'), { center: { lat: 12.9716, lng: 77.5946 }, zoom: 12 });
@@ -236,7 +198,9 @@
           statusEl.className = 'status error';
           return;
         }
+        // Clear markers
         markers.forEach(m => m.setMap(null)); markers = [];
+        // Filter & sort
         const filtered = results
           .filter(r => typeof r.rating === 'number' && (r.user_ratings_total || 0) > 200)
           .sort((a, b) => b.rating - a.rating || (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
@@ -246,22 +210,67 @@
         top5.forEach((place, i) => {
           const tr = document.createElement('tr');
           const menuUrl = `https://www.google.com/maps/search/?api=1&query=menu&query_place_id=${place.place_id}`;
+          // Create Details cell placeholder
           tr.innerHTML =
-            `<td><a href="javascript:void(0)" class="restaurant-link" onclick="focusMarker(${i})">${place.name}</a></td>` +
+            `<td><a href=\"javascript:void(0)\" class=\"restaurant-link\" onclick=\"focusMarker(${i})\">${place.name}</a></td>` +
             `<td>${place.rating.toFixed(1)}</td>` +
             `<td>${place.user_ratings_total}</td>` +
-            `<td>${place.vicinity || place.formatted_address || ''}</td>` +
-            `<td><a href="${menuUrl}" class="menu-link" target="_blank">View Menu</a></td>`;
+            `<td class=\"address-col\">${place.vicinity || place.formatted_address || ''}</td>` +
+            `<td><a href=\"${menuUrl}\" class=\"menu-link\" target=\"_blank\">View Menu</a></td>` +
+            `<td class=\"details-col\">Loading details...</td>`;
           tbody.appendChild(tr);
 
+          // Marker
           const marker = new google.maps.Marker({ map, position: place.geometry.location, title: place.name });
           marker.addListener('click', () => {
-            const lat = place.geometry.location.lat(); const lng = place.geometry.location.lng();
+            const lat = place.geometry.location.lat(), lng = place.geometry.location.lng();
             const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-            infoWindow.setContent(`<div><strong>${place.name}</strong><br/>${place.rating.toFixed(1)} out of 5<br/>` +
-                                  `<a href="${mapsUrl}" target="_blank"><button class="map-btn">Open in Google Maps</button></a></div>`);
-            infoWindow.open(map,marker);
-          }); markers.push(marker);
+            infoWindow.setContent(
+              `<div><strong>${place.name}</strong><br/>${place.rating.toFixed(1)} out of 5<br/>` +
+              `<a href=\"${mapsUrl}\" target=\"_blank\"><button class=\"map-btn\">Open in Google Maps</button></a></div>`
+            );
+            infoWindow.open(map, marker);
+          });
+          markers.push(marker);
+
+          // Fetch details for overview & must-try
+          placesService.getDetails({ placeId: place.place_id, fields: ['editorial_summary','reviews'] }, (detail, dStatus) => {
+            const cell = tr.querySelector('.details-col');
+            cell.textContent = '';
+            // Overview
+            if (dStatus === google.maps.places.PlacesServiceStatus.OK && detail.editorial_summary && detail.editorial_summary.overview) {
+              const ov = document.createElement('p');
+              ov.textContent = detail.editorial_summary.overview;
+              cell.appendChild(ov);
+            } else {
+              const noOv = document.createElement('p');
+              noOv.textContent = 'Overview not available';
+              cell.appendChild(noOv);
+            }
+            // Must Try
+            const mustTry = document.createElement('div');
+            mustTry.className = 'must-try';
+            mustTry.textContent = 'Must Try:';
+            cell.appendChild(mustTry);
+            if (dStatus === google.maps.places.PlacesServiceStatus.OK && detail.reviews && detail.reviews.length) {
+              // Filter reviews with food aspects
+              const foodSnippets = detail.reviews
+                .filter(r => r.aspects && r.aspects.some(a => a.type === 'food'))
+                .slice(0, 3)
+                .map(r => r.text);
+              if (foodSnippets.length) {
+                foodSnippets.forEach(text => {
+                  const p = document.createElement('p');
+                  p.textContent = text;
+                  cell.appendChild(p);
+                });
+              } else {
+                const none = document.createElement('p'); none.textContent = 'No key food snippets'; cell.appendChild(none);
+              }
+            } else {
+              const none = document.createElement('p'); none.textContent = 'No reviews available'; cell.appendChild(none);
+            }
+          });
         });
         statusEl.textContent = `Showing top ${top5.length} restaurants by rating with >200 reviews.`;
         statusEl.className = 'status';

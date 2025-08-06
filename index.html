@@ -106,7 +106,7 @@
   </header>
   <main class="container">
     <section class="controls">
-      <input id="location-input" type="text" placeholder="Enter pincode or locality" />
+      <input id="location-input" type="text" placeholder="Enter any Bangalore address, locality, street, or pincode" />
       <select id="cuisine-select">
         <option value="">Any cuisine</option>
         <option>American</option>
@@ -183,7 +183,12 @@
       infoWindow = new google.maps.InfoWindow();
       autocomplete = new google.maps.places.Autocomplete(
         document.getElementById('location-input'),
-        { bounds: bangaloreBounds, strictBounds: true, types: ['(regions)'], componentRestrictions: { country: 'IN' } }
+        {
+          bounds: bangaloreBounds,
+          strictBounds: true,
+          types: ['geocode'],
+          componentRestrictions: { country: 'IN' }
+        }
       );
       document.getElementById('search-btn').addEventListener('click', onSearchClick);
       map = new google.maps.Map(document.getElementById('map'), { center: { lat: 12.9716, lng: 77.5946 }, zoom: 12 });
@@ -204,7 +209,7 @@
       tbody.innerHTML = '';
       statusEl.textContent = '';
       if (!address) {
-        statusEl.textContent = 'Please enter a pincode or locality.';
+        statusEl.textContent = 'Please enter a location.';
         statusEl.className = 'status error';
         return;
       }

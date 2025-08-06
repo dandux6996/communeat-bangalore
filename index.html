@@ -227,9 +227,9 @@
         markers.forEach(m => m.setMap(null)); markers = [];
         const filtered = results.filter(r => typeof r.rating === 'number' && (r.user_ratings_total || 0) > 200)
                                 .sort((a, b) => b.rating - a.rating || (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
-        const top5 = filtered.slice(0, 5);
+        const top20 = filtered.slice(0, 20);
         map.setCenter(location); map.setZoom(14);
-        top5.forEach((place, i) => {
+        top20.forEach((place, i) => {
           const tr = document.createElement('tr');
           tr.innerHTML =
             `<td><a href="javascript:void(0)" class="restaurant-link" onclick="focusMarker(${i})">${place.name}</a></td>` +
@@ -246,7 +246,7 @@
             infoWindow.open(map,marker);
           }); markers.push(marker);
         });
-        statusEl.textContent = `Showing top ${top5.length} restaurants by rating with >200 reviews.`; statusEl.className='status';
+        statusEl.textContent = `Showing top ${top20.length} restaurants by rating with >200 reviews.`; statusEl.className='status';
       });
     }
   </script>

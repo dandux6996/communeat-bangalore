@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -150,26 +151,28 @@
       </select>
       <button id="search-btn">Search</button>
       <span id="status" class="status"></span>
-    </section><section class="results">
-  <table id="restaurant-table">
-    <thead>
-      <tr>
-        <th>Restaurant</th>
-        <th>Rating</th>
-        <th>Reviews</th>
-        <th class="address-col">Address</th>
-        <th>Menu</th>
-      </tr>
-    </thead>
-    <tbody> <!-- rows will be inserted here --> </tbody>
-  </table>
-</section>
+    </section>
 
-<section class="map-section">
-  <div id="map"></div>
-</section>
+    <section class="results">
+      <table id="restaurant-table">
+        <thead>
+          <tr>
+            <th>Restaurant</th>
+            <th>Rating / Reviews</th>
+            <th class="address-col">Address</th>
+            <th>Menu</th>
+          </tr>
+        </thead>
+        <tbody> <!-- rows will be inserted here --> </tbody>
+      </table>
+    </section>
 
-  </main>  <script>
+    <section class="map-section">
+      <div id="map"></div>
+    </section>
+  </main>
+
+  <script>
     let geocoder, placesService, autocomplete, map, infoWindow, markers = [];
 
     function initMap() {
@@ -238,11 +241,10 @@
           const tr = document.createElement('tr');
           const menuUrl = `https://www.google.com/maps/search/?api=1&query=menu&query_place_id=${place.place_id}`;
           tr.innerHTML =
-            `<td><a href=\"javascript:void(0)\" class=\"restaurant-link\" onclick=\"focusMarker(${i})\">${place.name}</a><div class=\"overview\">Loading overview...</div></td>` +
-            `<td>${place.rating.toFixed(1)}</td>` +
-            `<td>${place.user_ratings_total}</td>` +
-            `<td class=\"address-col\">${place.vicinity || place.formatted_address || ''}</td>` +
-            `<td><a href=\"${menuUrl}\" class=\"menu-link\" target=\"_blank\">View Menu</a></td>`;
+            `<td><a href="javascript:void(0)" class="restaurant-link" onclick="focusMarker(${i})">${place.name}</a><div class="overview"></div></td>` +
+            `<td>${place.rating.toFixed(1)}<br>${place.user_ratings_total} reviews</td>` +
+            `<td class="address-col">${place.vicinity || place.formatted_address || ''}</td>` +
+            `<td><a href="${menuUrl}" class="menu-link" target="_blank">View Menu</a></td>`;
           tbody.appendChild(tr);
 
           const marker = new google.maps.Marker({ map, position: place.geometry.location, title: place.name });
@@ -251,19 +253,18 @@
             const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
             infoWindow.setContent(
               `<div><strong>${place.name}</strong><br/>${place.rating.toFixed(1)} out of 5<br/>` +
-              `<a href=\"${mapsUrl}\" target=\"_blank\"><button class=\"map-btn\">Open in Google Maps</button></a></div>`
+              `<a href="${mapsUrl}" target="_blank"><button class="map-btn">Open in Google Maps</button></a></div>`
             );
             infoWindow.open(map, marker);
           });
           markers.push(marker);
 
+          // Fetch overview only
           placesService.getDetails({ placeId: place.place_id, fields: ['editorial_summary'] }, (detail, dStatus) => {
             const ovEl = tr.querySelector('.overview');
-            if (dStatus === google.maps.places.PlacesServiceStatus.OK && detail.editorial_summary && detail.editorial_summary.overview) {
-              ovEl.textContent = detail.editorial_summary.overview;
-            } else {
-              ovEl.textContent = 'Overview not available';
-            }
+            ovEl.textContent = (dStatus === google.maps.places.PlacesServiceStatus.OK && detail.editorial_summary && detail.editorial_summary.overview)
+              ? detail.editorial_summary.overview
+              : '';
           });
         });
         statusEl.textContent = `Showing top ${top5.length} restaurants by rating with >200 reviews.`;
@@ -272,5 +273,7 @@
     }
 
     window.initMap = initMap;
-  </script>  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap"></script></body>
+  </script>
+  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap"></script>
+</body>
 </html>

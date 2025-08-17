@@ -28,14 +28,10 @@
     }
     header.banner h1 { font-size: 2.5rem; font-weight: 600; margin: 0; }
     header.banner .tagline { font-size: 1.2rem; font-weight: 300; margin: 0.5rem 0 0; }
-    main.container { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; }
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      justify-content: center;
-      margin-bottom: 2rem;
-    }
+    main.container { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; text-align: center; }
+    .subheading { font-size: 1.5rem; font-weight: 500; margin: 1.5rem 0; cursor: pointer; color: var(--secondary); }
+    .hidden-section { display: none; }
+    .controls { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-bottom: 2rem; }
     .controls input, .controls select, .controls button {
       padding: 0.75rem 1rem;
       font-size: 1rem;
@@ -53,50 +49,27 @@
       transition: background var(--transition);
     }
     .controls button:hover { background: var(--primary); }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 2rem;
-      background: var(--bg-input);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      border-radius: var(--border-radius);
-      overflow: hidden;
-    }
-    th, td {
-      padding: 1rem;
-      text-align: left;
-      vertical-align: top;
-    }
-    thead th {
-      background: var(--primary);
-      color: var(--text-light);
-      font-weight: 600;
-    }
-    .address-col { width: 20%; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; background: var(--bg-input); box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: var(--border-radius); overflow: hidden; }
+    th, td { padding: 1rem; text-align: left; vertical-align: top; }
+    thead th { background: var(--primary); color: var(--text-light); font-weight: 600; }
+    .address-col { width: 15%; }
     tbody tr:nth-child(even) { background: #f9f9f9; }
     tbody tr:hover { background: #f1f1f1; }
-    #map {
-      width: 100%;
-      height: 600px;
-      border-radius: var(--border-radius);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
+    #map { width: 100%; height: 600px; border-radius: var(--border-radius); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     .restaurant-link { color: var(--secondary); text-decoration: none; font-weight: 500; display: block; }
     .restaurant-link:hover { text-decoration: underline; }
     .overview { font-size: 0.9rem; margin-top: 0.5rem; color: #555; }
-    a.menu-link {
-      background: var(--secondary);
-      color: var(--text-light);
-      padding: 0.5rem 0.75rem;
-      border-radius: var(--border-radius);
-      text-decoration: none;
-      font-size: 0.9rem;
-      transition: background var(--transition);
-      display: inline-block;
-    }
+    a.menu-link { background: var(--secondary); color: var(--text-light); padding: 0.5rem 0.75rem; border-radius: var(--border-radius); text-decoration: none; font-size: 0.9rem; transition: background var(--transition); display: inline-block; }
     a.menu-link:hover { background: var(--primary); }
     .status { display: block; text-align: center; margin-top: 1rem; font-style: italic; }
     .error { color: red; }
+      .hidden { display: none; }
+    /* Mode picker styles */
+    .mode-picker { max-width: 800px; margin: 2rem auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+    .mode-card { background: var(--bg-input); border: 1px solid #e5e5e5; border-radius: 10px; padding: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; text-align: center; }
+    .mode-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
+    .mode-card h2 { margin: 0 0 .25rem; font-size: 1.25rem; }
+    .mode-card p { margin: 0; color: #666; font-size: .95rem; }
   </style>
 </head>
 <body>
@@ -105,174 +78,88 @@
     <p class="tagline">Discover flavor. Share belonging.</p>
   </header>
   <main class="container">
-    <section class="controls">
-      <input id="location-input" type="text" placeholder="Enter any Bangalore address, locality, street, or pincode" />
-      <select id="cuisine-select">
-        <option value="">Any cuisine</option>
-        <option>American</option>
-        <option>Asian</option>
-        <option>Bakery</option>
-        <option>Bar</option>
-        <option>BBQ</option>
-        <option>Breakfast</option>
-        <option>Brazilian</option>
-        <option>British</option>
-        <option>Buffets</option>
-        <option>Café</option>
-        <option>Caribbean</option>
-        <option>Chinese</option>
-        <option>Coffee</option>
-        <option>Comfort Food</option>
-        <option>Desserts</option>
-        <option>Dim Sum</option>
-        <option>European</option>
-        <option>Fast Food</option>
-        <option>French</option>
-        <option>German</option>
-        <option>Greek</option>
-        <option>Indian</option>
-        <option>Italian</option>
-        <option>Japanese</option>
-        <option>Korean</option>
-        <option>Latin American</option>
-        <option>Malaysian</option>
-        <option>Mediterranean</option>
-        <option>Mexican</option>
-        <option>Middle Eastern</option>
-        <option>Pizza</option>
-        <option>Seafood</option>
-        <option>Spanish</option>
-        <option>Steakhouse</option>
-        <option>Sushi</option>
-        <option>Tapas</option>
-        <option>Thai</option>
-        <option>Vegetarian</option>
-        <option>Vietnamese</option>
-      </select>
-      <button id="search-btn">Search</button>
-      <span id="status" class="status"></span>
+    <!-- Mode picker shown on load -->
+    <section id="mode-picker" class="mode-picker">
+      <div id="pick-location" class="mode-card" role="button" tabindex="0" aria-label="Choose Location mode">
+        <h2>Location</h2>
+        <p>Find top-rated restaurants near a spot in Bangalore.</p>
+      </div>
+      <div id="pick-route" class="mode-card" role="button" tabindex="0" aria-label="Choose Route mode">
+        <h2>Route</h2>
+        <p>Plan eats along a route (coming soon).</p>
+      </div>
     </section>
 
-    <section class="results">
-      <table id="restaurant-table">
-        <thead>
-          <tr>
-            <th>Restaurant</th>
-            <th>Rating / Reviews</th>
-            <th class="address-col">Address</th>
-            <th>Menu</th>
-          </tr>
-        </thead>
-        <tbody> <!-- rows will be inserted here --> </tbody>
-      </table>
-    </section>
+    <!-- LOCATION MODE UI (hidden until user picks Location) -->
+    <div id="location-mode" class="hidden">
+    <div class="subheading" onclick="toggleSection('location-section')">Location</div>
+    <div class="subheading">Route</div>
 
-    <section class="map-section">
+    <section id="location-section" class="hidden-section">
+      <section class="controls">
+        <input id="location-input" type="text" placeholder="Enter any Bangalore address, locality, street, or pincode" />
+        <select id="cuisine-select">
+          <option value="">Any cuisine</option>
+          <option>American</option><option>Asian</option><option>Bakery</option><option>Bar</option><option>BBQ</option>
+          <option>Breakfast</option><option>Brazilian</option><option>British</option><option>Buffets</option><option>Café</option>
+          <option>Caribbean</option><option>Chinese</option><option>Coffee</option><option>Comfort Food</option><option>Desserts</option>
+          <option>Dim Sum</option><option>European</option><option>Fast Food</option><option>French</option><option>German</option>
+          <option>Greek</option><option>Indian</option><option>Italian</option><option>Japanese</option><option>Korean</option>
+          <option>Latin American</option><option>Malaysian</option><option>Mediterranean</option><option>Mexican</option>
+          <option>Middle Eastern</option><option>Pizza</option><option>Seafood</option><option>Spanish</option><option>Steakhouse</option>
+          <option>Sushi</option><option>Tapas</option><option>Thai</option><option>Vegetarian</option><option>Vietnamese</option>
+        </select>
+        <button id="search-btn">Search</button>
+        <span id="status" class="status"></span>
+      </section>
+
+      <section class="results">
+        <table id="restaurant-table">
+          <thead>
+            <tr>
+              <th>Restaurant</th>
+              <th>Rating / Reviews</th>
+              <th class="address-col">Address</th>
+              <th>Menu</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section class="map-section">
       <div id="map"></div>
     </section>
+    </div><!-- end #location-mode -->
   </main>
 
   <script>
-    let geocoder, placesService, autocomplete, map, infoWindow, markers = [];
-
-    function initMap() {
-      const bangaloreBounds = { north: 13.139, south: 12.787, east: 77.736, west: 77.455 };
-      geocoder = new google.maps.Geocoder();
-      placesService = new google.maps.places.PlacesService(document.createElement('div'));
-      infoWindow = new google.maps.InfoWindow();
-      autocomplete = new google.maps.places.Autocomplete(
-        document.getElementById('location-input'),
-        { bounds: bangaloreBounds, strictBounds: true, types: ['geocode'], componentRestrictions: { country: 'IN' } }
-      );
-      document.getElementById('search-btn').addEventListener('click', onSearchClick);
-      map = new google.maps.Map(document.getElementById('map'), { center: { lat: 12.9716, lng: 77.5946 }, zoom: 12 });
+    function toggleSection(id) {
+      const section = document.getElementById(id);
+      section.style.display = section.style.display === 'block' ? 'none' : 'block';
     }
+ 
+    // Show Location UI only after user picks it
+    document.addEventListener('DOMContentLoaded', () => {
+      const modePicker = document.getElementById('mode-picker');
+      const locationMode = document.getElementById('location-mode');
+      const pickLocation = document.getElementById('pick-location');
+      const pickRoute = document.getElementById('pick-route');
 
-    function focusMarker(index) {
-      const marker = markers[index];
-      map.panTo(marker.getPosition());
-      map.setZoom(16);
-      google.maps.event.trigger(marker, 'click');
-    }
-
-    function onSearchClick() {
-      const address = document.getElementById('location-input').value.trim();
-      const cuisine = document.getElementById('cuisine-select').value;
-      const statusEl = document.getElementById('status');
-      const tbody = document.querySelector('#restaurant-table tbody');
-      tbody.innerHTML = '';
-      statusEl.textContent = '';
-      if (!address) {
-        statusEl.textContent = 'Please enter a location.';
-        statusEl.className = 'status error';
-        return;
+      function showLocationMode() {
+        modePicker.classList.add('hidden');
+        locationMode.classList.remove('hidden');
       }
-      statusEl.textContent = 'Geocoding...';
-      geocoder.geocode({ address }, (results, geocodeStatus) => {
-        if (geocodeStatus !== 'OK' || !results[0]) {
-          statusEl.textContent = 'Could not find that location.';
-          statusEl.className = 'status error';
-          return;
-        }
-        statusEl.textContent = 'Searching for top-rated restaurants with >200 reviews...';
-        findTopRated(results[0].geometry.location, cuisine);
-      });
-    }
 
-    function findTopRated(location, cuisine) {
-      const request = { location, radius: 3000, type: 'restaurant' };
-      if (cuisine) request.keyword = cuisine;
-      placesService.nearbySearch(request, (results, status) => {
-        const statusEl = document.getElementById('status');
-        const tbody = document.querySelector('#restaurant-table tbody');
-        if (status !== 'OK' || !results || !results.length) {
-          statusEl.textContent = 'No restaurants found.';
-          statusEl.className = 'status error';
-          return;
-        }
-        markers.forEach(m => m.setMap(null)); markers = [];
-        const filtered = results
-          .filter(r => typeof r.rating === 'number' && (r.user_ratings_total || 0) > 200)
-          .sort((a, b) => b.rating - a.rating || (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
-        const top5 = filtered.slice(0, 5);
-        map.setCenter(location); map.setZoom(14);
-
-        top5.forEach((place, i) => {
-          const tr = document.createElement('tr');
-          const menuUrl = `https://www.google.com/maps/search/?api=1&query=menu&query_place_id=${place.place_id}`;
-          tr.innerHTML =
-            `<td><a href="javascript:void(0)" class="restaurant-link" onclick="focusMarker(${i})">${place.name}</a><div class="overview"></div></td>` +
-            `<td>${place.rating.toFixed(1)}<br>${place.user_ratings_total} reviews</td>` +
-            `<td class="address-col">${place.vicinity || place.formatted_address || ''}</td>` +
-            `<td><a href="${menuUrl}" class="menu-link" target="_blank">View Menu</a></td>`;
-          tbody.appendChild(tr);
-
-          const marker = new google.maps.Marker({ map, position: place.geometry.location, title: place.name });
-          marker.addListener('click', () => {
-            const lat = place.geometry.location.lat(), lng = place.geometry.location.lng();
-            const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-            infoWindow.setContent(
-              `<div><strong>${place.name}</strong><br/>${place.rating.toFixed(1)} out of 5<br/>` +
-              `<a href="${mapsUrl}" target="_blank"><button class="map-btn">Open in Google Maps</button></a></div>`
-            );
-            infoWindow.open(map, marker);
-          });
-          markers.push(marker);
-
-          // Fetch overview only
-          placesService.getDetails({ placeId: place.place_id, fields: ['editorial_summary'] }, (detail, dStatus) => {
-            const ovEl = tr.querySelector('.overview');
-            ovEl.textContent = (dStatus === google.maps.places.PlacesServiceStatus.OK && detail.editorial_summary && detail.editorial_summary.overview)
-              ? detail.editorial_summary.overview
-              : '';
-          });
-        });
-        statusEl.textContent = `Showing top ${top5.length} restaurants by rating with >200 reviews.`;
-        statusEl.className = 'status';
-      });
-    }
-
-    window.initMap = initMap;
+      if (pickLocation) {
+        pickLocation.addEventListener('click', showLocationMode);
+        pickLocation.addEventListener('keypress', (e)=>{ if(e.key==='Enter' || e.key===' ') showLocationMode(); });
+      }
+      if (pickRoute) {
+        pickRoute.addEventListener('click', ()=> alert('Route mode is coming soon! For now, choose Location.'));
+        pickRoute.addEventListener('keypress', (e)=>{ if(e.key==='Enter' || e.key===' ') alert('Route mode is coming soon! For now, choose Location.'); });
+      }
+    });
   </script>
   <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap"></script>
 </body>

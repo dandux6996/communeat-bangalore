@@ -104,154 +104,58 @@
   </main>
 
   <script>
-    // Toggle accordion for Location section
-    function toggleSection(id) {
-      const section = document.getElementById(id);
-      section.style.display = section.style.display === 'block' ? 'none' : 'block';
-    }
-
-    // --- Google Maps / Places wiring ---
-    let geocoder, placesService, autocomplete, map, infoWindow, markers = [];
+    let map, service, infowindow;
 
     function initMap() {
-      // Initialize services
-      const bangaloreBounds = { north: 13.139, south: 12.787, east: 77.736, west: 77.455 };
-      geocoder = new google.maps.Geocoder();
-      placesService = new google.maps.places.PlacesService(document.createElement('div'));
-      infoWindow = new google.maps.InfoWindow();
-
-      // Map exists in DOM (hidden container is fine)
       map = new google.maps.Map(document.getElementById('map'), {
         center: { lat: 12.9716, lng: 77.5946 },
-        zoom: 12
+        zoom: 13
       });
-
-      // Autocomplete on the location input (address-level)
-      const locInput = document.getElementById('location-input');
-      if (locInput) {
-        autocomplete = new google.maps.places.Autocomplete(locInput, {
-          bounds: bangaloreBounds,
-          strictBounds: true,
-          types: ['geocode'],
-          componentRestrictions: { country: 'IN' }
-        });
-      }
-
-      // Hook Search button
-      const searchBtn = document.getElementById('search-btn');
-      if (searchBtn) searchBtn.addEventListener('click', onSearchClick);
-
-      // Mode-picker show/hide
-      const modePicker = document.getElementById('mode-picker');
-      const locationMode = document.getElementById('location-mode');
-      const pickLocation = document.getElementById('pick-location');
-      const pickRoute = document.getElementById('pick-route');
-
-      function showLocationMode() {
-        modePicker.classList.add('hidden');
-        locationMode.classList.remove('hidden');
-      }
-      if (pickLocation) {
-        pickLocation.addEventListener('click', showLocationMode);
-        pickLocation.addEventListener('keypress', (e)=>{ if(e.key==='Enter' || e.key===' ') showLocationMode(); });
-      }
-      if (pickRoute) {
-        pickRoute.addEventListener('click', ()=> alert('Route mode is coming soon! For now, choose Location.'));
-        pickRoute.addEventListener('keypress', (e)=>{ if(e.key==='Enter' || e.key===' ') alert('Route mode is coming soon! For now, choose Location.'); });
-      }
+      service = new google.maps.places.PlacesService(map);
     }
 
-    function focusMarker(index) {
-      const marker = markers[index];
-      if (!marker) return;
-      map.panTo(marker.getPosition());
-      map.setZoom(16);
-      google.maps.event.trigger(marker, 'click');
-    }
-
-    function onSearchClick() {
-      const address = document.getElementById('location-input').value.trim();
+    function searchRestaurants() {
+      const query = document.getElementById('location-input').value + ' Bangalore';
       const cuisine = document.getElementById('cuisine-select').value;
-      const statusEl = document.getElementById('status');
+      const request = { query: cuisine + ' restaurants in ' + query, fields: ['place_id','name','formatted_address','rating','user_ratings_total','photos'] };
+      service.findPlaceFromQuery(request, (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+          const sorted = results.filter(r=>r.user_ratings_total>200).sort((a,b)=>b.rating-a.rating).slice(0,5);
+          renderResults(sorted);
+          map.setCenter(sorted[0].geometry.location);
+        }
+      });
+    }
+
+    function renderResults(restaurants) {
       const tbody = document.querySelector('#restaurant-table tbody');
       tbody.innerHTML = '';
-      statusEl.textContent = '';
-      if (!address) {
-        statusEl.textContent = 'Please enter a location.';
-        statusEl.className = 'status error';
-        return;
-      }
-      statusEl.textContent = 'Geocoding...';
-      geocoder.geocode({ address }, (results, geocodeStatus) => {
-        if (geocodeStatus !== 'OK' || !results || !results[0]) {
-          statusEl.textContent = 'Could not find that location.';
-          statusEl.className = 'status error';
-          return;
-        }
-        statusEl.textContent = 'Searching for top-rated restaurants with >200 reviews...';
-        findTopRated(results[0].geometry.location, cuisine);
+      restaurants.forEach(place => {
+        const tr = document.createElement('tr');
+        const nameTd = document.createElement('td');
+        nameTd.innerHTML = `<a href="https://www.google.com/maps/place/?q=place_id:${place.place_id}" target="_blank" class="restaurant-link">${place.name}</a>`;
+        if(place.editorial_summary) nameTd.innerHTML += `<div class='overview'>${place.editorial_summary.overview}</div>`;
+        tr.appendChild(nameTd);
+        const ratingTd = document.createElement('td');
+        ratingTd.innerHTML = `${place.rating || 'N/A'}<br>${place.user_ratings_total || 0} reviews`;
+        tr.appendChild(ratingTd);
+        const addrTd = document.createElement('td');
+        addrTd.textContent = place.formatted_address || '';
+        tr.appendChild(addrTd);
+        const menuTd = document.createElement('td');
+        menuTd.innerHTML = `<a class='menu-link' href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}+menu" target="_blank">View Menu</a>`;
+        tr.appendChild(menuTd);
+        tbody.appendChild(tr);
       });
     }
 
-    function findTopRated(location, cuisine) {
-      const request = { location, radius: 3000, type: 'restaurant' };
-      if (cuisine) request.keyword = cuisine;
-      placesService.nearbySearch(request, (results, status) => {
-        const statusEl = document.getElementById('status');
-        const tbody = document.querySelector('#restaurant-table tbody');
-        if (status !== 'OK' || !results || !results.length) {
-          statusEl.textContent = 'No restaurants found.';
-          statusEl.className = 'status error';
-          return;
-        }
-        // Clear markers
-        markers.forEach(m => m.setMap(null)); markers = [];
-        // Filter & sort
-        const filtered = results
-          .filter(r => typeof r.rating === 'number' && (r.user_ratings_total || 0) > 200)
-          .sort((a, b) => b.rating - a.rating || (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
-        const top5 = filtered.slice(0, 5);
-        map.setCenter(location); map.setZoom(14);
-
-        top5.forEach((place, i) => {
-          const tr = document.createElement('tr');
-          const menuUrl = `https://www.google.com/maps/search/?api=1&query=menu&query_place_id=${place.place_id}`;
-          tr.innerHTML =
-            `<td><a href="javascript:void(0)" class="restaurant-link" onclick="focusMarker(${i})">${place.name}</a>` +
-            `<div class="overview"></div></td>` +
-            `<td>${place.rating.toFixed(1)}<br>${place.user_ratings_total} reviews</td>` +
-            `<td class="address-col">${place.vicinity || place.formatted_address || ''}</td>` +
-            `<td><a href="${menuUrl}" class="menu-link" target="_blank">View Menu</a></td>`;
-          tbody.appendChild(tr);
-
-          // Map marker + info window
-          const marker = new google.maps.Marker({ map, position: place.geometry.location, title: place.name });
-          marker.addListener('click', () => {
-            const lat = place.geometry.location.lat(), lng = place.geometry.location.lng();
-            const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-            infoWindow.setContent(
-              `<div><strong>${place.name}</strong><br/>${place.rating.toFixed(1)} out of 5<br/>` +
-              `<a href="${mapsUrl}" target="_blank"><button class="map-btn">Open in Google Maps</button></a></div>`
-            );
-            infoWindow.open(map, marker);
-          });
-          markers.push(marker);
-
-          // Fetch overview (editorial summary)
-          placesService.getDetails({ placeId: place.place_id, fields: ['editorial_summary'] }, (detail, dStatus) => {
-            const ovEl = tr.querySelector('.overview');
-            ovEl.textContent = (dStatus === google.maps.places.PlacesServiceStatus.OK && detail.editorial_summary && detail.editorial_summary.overview)
-              ? detail.editorial_summary.overview
-              : '';
-          });
-        });
-        statusEl.textContent = `Showing top ${top5.length} restaurants by rating with >200 reviews.`;
-        statusEl.className = 'status';
-      });
-    }
-
-    // Expose for Google callback
-    window.initMap = initMap;
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('search-btn').addEventListener('click', searchRestaurants);
+      const modePicker = document.getElementById('mode-picker');
+      const locationMode = document.getElementById('location-mode');
+      document.getElementById('pick-location').addEventListener('click', ()=>{ modePicker.classList.add('hidden'); locationMode.classList.remove('hidden'); });
+      document.getElementById('pick-route').addEventListener('click', ()=> alert('Route mode coming soon'));
+    });
   </script>
   <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap"></script>
 </body>

@@ -29,47 +29,31 @@
     header.banner h1 { font-size: 2.5rem; font-weight: 600; margin: 0; }
     header.banner .tagline { font-size: 1.2rem; font-weight: 300; margin: 0.5rem 0 0; }
     main.container { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; text-align: center; }
-    .subheading { font-size: 1.5rem; font-weight: 500; margin: 1.5rem 0; cursor: pointer; color: var(--secondary); }
-    .hidden-section { display: none; }
+    .hidden { display: none; }
     .controls { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-bottom: 2rem; }
     .controls input, .controls select, .controls button {
       padding: 0.75rem 1rem;
       font-size: 1rem;
       border: 1px solid #ccc;
       border-radius: var(--border-radius);
-      transition: border-color var(--transition);
     }
-    .controls input, .controls select { background: var(--bg-input); flex: 1 1 200px; }
-    .controls input:focus, .controls select:focus { border-color: var(--primary); outline: none; }
-    .controls button {
-      background: var(--accent);
-      color: var(--text-light);
-      border: none;
-      cursor: pointer;
-      transition: background var(--transition);
-    }
+    .controls button { background: var(--accent); color: var(--text-light); border: none; cursor: pointer; }
     .controls button:hover { background: var(--primary); }
     table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; background: var(--bg-input); box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: var(--border-radius); overflow: hidden; }
     th, td { padding: 1rem; text-align: left; vertical-align: top; }
     thead th { background: var(--primary); color: var(--text-light); font-weight: 600; }
-    .address-col { width: 15%; }
     tbody tr:nth-child(even) { background: #f9f9f9; }
     tbody tr:hover { background: #f1f1f1; }
-    #map { width: 100%; height: 600px; border-radius: var(--border-radius); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    #map { width: 100%; height: 600px; border-radius: var(--border-radius); }
     .restaurant-link { color: var(--secondary); text-decoration: none; font-weight: 500; display: block; }
     .restaurant-link:hover { text-decoration: underline; }
     .overview { font-size: 0.9rem; margin-top: 0.5rem; color: #555; }
-    a.menu-link { background: var(--secondary); color: var(--text-light); padding: 0.5rem 0.75rem; border-radius: var(--border-radius); text-decoration: none; font-size: 0.9rem; transition: background var(--transition); display: inline-block; }
+    a.menu-link { background: var(--secondary); color: var(--text-light); padding: 0.5rem 0.75rem; border-radius: var(--border-radius); text-decoration: none; font-size: 0.9rem; }
     a.menu-link:hover { background: var(--primary); }
     .status { display: block; text-align: center; margin-top: 1rem; font-style: italic; }
     .error { color: red; }
-      .hidden { display: none; }
-    /* Mode picker styles */
     .mode-picker { max-width: 800px; margin: 2rem auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
-    .mode-card { background: var(--bg-input); border: 1px solid #e5e5e5; border-radius: 10px; padding: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; text-align: center; }
-    .mode-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
-    .mode-card h2 { margin: 0 0 .25rem; font-size: 1.25rem; }
-    .mode-card p { margin: 0; color: #666; font-size: .95rem; }
+    .mode-card { background: var(--bg-input); border: 1px solid #e5e5e5; border-radius: 10px; padding: 1.25rem; cursor: pointer; text-align: center; }
   </style>
 </head>
 <body>
@@ -78,24 +62,12 @@
     <p class="tagline">Discover flavor. Share belonging.</p>
   </header>
   <main class="container">
-    <!-- Mode picker shown on load -->
     <section id="mode-picker" class="mode-picker">
-      <div id="pick-location" class="mode-card" role="button" tabindex="0" aria-label="Choose Location mode">
-        <h2>Location</h2>
-        <p>Find top-rated restaurants near a spot in Bangalore.</p>
-      </div>
-      <div id="pick-route" class="mode-card" role="button" tabindex="0" aria-label="Choose Route mode">
-        <h2>Route</h2>
-        <p>Plan eats along a route (coming soon).</p>
-      </div>
+      <div id="pick-location" class="mode-card"><h2>Location</h2></div>
+      <div id="pick-route" class="mode-card"><h2>Route</h2></div>
     </section>
 
-    <!-- LOCATION MODE UI (hidden until user picks Location) -->
     <div id="location-mode" class="hidden">
-    <div class="subheading" onclick="toggleSection('location-section')">Location</div>
-    <div class="subheading">Route</div>
-
-    <section id="location-section" class="hidden-section">
       <section class="controls">
         <input id="location-input" type="text" placeholder="Enter any Bangalore address, locality, street, or pincode" />
         <select id="cuisine-select">
@@ -119,7 +91,7 @@
             <tr>
               <th>Restaurant</th>
               <th>Rating / Reviews</th>
-              <th class="address-col">Address</th>
+              <th>Address</th>
               <th>Menu</th>
             </tr>
           </thead>
@@ -127,20 +99,49 @@
         </table>
       </section>
 
-      <section class="map-section">
-      <div id="map"></div>
-    </section>
-    </div><!-- end #location-mode -->
+      <section class="map-section"><div id="map"></div></section>
+    </div>
   </main>
 
   <script>
+    // Toggle accordion for Location section
     function toggleSection(id) {
       const section = document.getElementById(id);
       section.style.display = section.style.display === 'block' ? 'none' : 'block';
     }
- 
-    // Show Location UI only after user picks it
-    document.addEventListener('DOMContentLoaded', () => {
+
+    // --- Google Maps / Places wiring ---
+    let geocoder, placesService, autocomplete, map, infoWindow, markers = [];
+
+    function initMap() {
+      // Initialize services
+      const bangaloreBounds = { north: 13.139, south: 12.787, east: 77.736, west: 77.455 };
+      geocoder = new google.maps.Geocoder();
+      placesService = new google.maps.places.PlacesService(document.createElement('div'));
+      infoWindow = new google.maps.InfoWindow();
+
+      // Map exists in DOM (hidden container is fine)
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 12.9716, lng: 77.5946 },
+        zoom: 12
+      });
+
+      // Autocomplete on the location input (address-level)
+      const locInput = document.getElementById('location-input');
+      if (locInput) {
+        autocomplete = new google.maps.places.Autocomplete(locInput, {
+          bounds: bangaloreBounds,
+          strictBounds: true,
+          types: ['geocode'],
+          componentRestrictions: { country: 'IN' }
+        });
+      }
+
+      // Hook Search button
+      const searchBtn = document.getElementById('search-btn');
+      if (searchBtn) searchBtn.addEventListener('click', onSearchClick);
+
+      // Mode-picker show/hide
       const modePicker = document.getElementById('mode-picker');
       const locationMode = document.getElementById('location-mode');
       const pickLocation = document.getElementById('pick-location');
@@ -150,7 +151,6 @@
         modePicker.classList.add('hidden');
         locationMode.classList.remove('hidden');
       }
-
       if (pickLocation) {
         pickLocation.addEventListener('click', showLocationMode);
         pickLocation.addEventListener('keypress', (e)=>{ if(e.key==='Enter' || e.key===' ') showLocationMode(); });
@@ -159,7 +159,99 @@
         pickRoute.addEventListener('click', ()=> alert('Route mode is coming soon! For now, choose Location.'));
         pickRoute.addEventListener('keypress', (e)=>{ if(e.key==='Enter' || e.key===' ') alert('Route mode is coming soon! For now, choose Location.'); });
       }
-    });
+    }
+
+    function focusMarker(index) {
+      const marker = markers[index];
+      if (!marker) return;
+      map.panTo(marker.getPosition());
+      map.setZoom(16);
+      google.maps.event.trigger(marker, 'click');
+    }
+
+    function onSearchClick() {
+      const address = document.getElementById('location-input').value.trim();
+      const cuisine = document.getElementById('cuisine-select').value;
+      const statusEl = document.getElementById('status');
+      const tbody = document.querySelector('#restaurant-table tbody');
+      tbody.innerHTML = '';
+      statusEl.textContent = '';
+      if (!address) {
+        statusEl.textContent = 'Please enter a location.';
+        statusEl.className = 'status error';
+        return;
+      }
+      statusEl.textContent = 'Geocoding...';
+      geocoder.geocode({ address }, (results, geocodeStatus) => {
+        if (geocodeStatus !== 'OK' || !results || !results[0]) {
+          statusEl.textContent = 'Could not find that location.';
+          statusEl.className = 'status error';
+          return;
+        }
+        statusEl.textContent = 'Searching for top-rated restaurants with >200 reviews...';
+        findTopRated(results[0].geometry.location, cuisine);
+      });
+    }
+
+    function findTopRated(location, cuisine) {
+      const request = { location, radius: 3000, type: 'restaurant' };
+      if (cuisine) request.keyword = cuisine;
+      placesService.nearbySearch(request, (results, status) => {
+        const statusEl = document.getElementById('status');
+        const tbody = document.querySelector('#restaurant-table tbody');
+        if (status !== 'OK' || !results || !results.length) {
+          statusEl.textContent = 'No restaurants found.';
+          statusEl.className = 'status error';
+          return;
+        }
+        // Clear markers
+        markers.forEach(m => m.setMap(null)); markers = [];
+        // Filter & sort
+        const filtered = results
+          .filter(r => typeof r.rating === 'number' && (r.user_ratings_total || 0) > 200)
+          .sort((a, b) => b.rating - a.rating || (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
+        const top5 = filtered.slice(0, 5);
+        map.setCenter(location); map.setZoom(14);
+
+        top5.forEach((place, i) => {
+          const tr = document.createElement('tr');
+          const menuUrl = `https://www.google.com/maps/search/?api=1&query=menu&query_place_id=${place.place_id}`;
+          tr.innerHTML =
+            `<td><a href="javascript:void(0)" class="restaurant-link" onclick="focusMarker(${i})">${place.name}</a>` +
+            `<div class="overview"></div></td>` +
+            `<td>${place.rating.toFixed(1)}<br>${place.user_ratings_total} reviews</td>` +
+            `<td class="address-col">${place.vicinity || place.formatted_address || ''}</td>` +
+            `<td><a href="${menuUrl}" class="menu-link" target="_blank">View Menu</a></td>`;
+          tbody.appendChild(tr);
+
+          // Map marker + info window
+          const marker = new google.maps.Marker({ map, position: place.geometry.location, title: place.name });
+          marker.addListener('click', () => {
+            const lat = place.geometry.location.lat(), lng = place.geometry.location.lng();
+            const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+            infoWindow.setContent(
+              `<div><strong>${place.name}</strong><br/>${place.rating.toFixed(1)} out of 5<br/>` +
+              `<a href="${mapsUrl}" target="_blank"><button class="map-btn">Open in Google Maps</button></a></div>`
+            );
+            infoWindow.open(map, marker);
+          });
+          markers.push(marker);
+
+          // Fetch overview (editorial summary)
+          placesService.getDetails({ placeId: place.place_id, fields: ['editorial_summary'] }, (detail, dStatus) => {
+            const ovEl = tr.querySelector('.overview');
+            ovEl.textContent = (dStatus === google.maps.places.PlacesServiceStatus.OK && detail.editorial_summary && detail.editorial_summary.overview)
+              ? detail.editorial_summary.overview
+              : '';
+          });
+        });
+        statusEl.textContent = `Showing top ${top5.length} restaurants by rating with >200 reviews.`;
+        statusEl.className = 'status';
+      });
+    }
+
+    // Expose for Google callback
+    window.initMap = initMap;
   </script>
   <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap"></script>
 </body>

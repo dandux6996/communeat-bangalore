@@ -205,7 +205,7 @@
     function findTopRated(location, cuisine) {
       const request = { location, radius: 3000, type: 'restaurant' };
       if (cuisine) request.keyword = cuisine;
-      if (price !== '') { request.minPriceLevel = parseInt(price, 10); request.maxPriceLevel = parseInt(price, 10); }
+      // Apply price filter after results fetched
       placesService.nearbySearch(request, (results, status) => {
         const statusEl = document.getElementById('status');
         const tbody = document.querySelector('#restaurant-table tbody');

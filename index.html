@@ -81,7 +81,15 @@
           <option>Middle Eastern</option><option>Pizza</option><option>Seafood</option><option>Spanish</option><option>Steakhouse</option>
           <option>Sushi</option><option>Tapas</option><option>Thai</option><option>Vegetarian</option><option>Vietnamese</option>
         </select>
-        <button id="search-btn">Search</button>
+      <select id="price-select" aria-label="Price range">
+        <option value="">Any price</option>
+        <option value="0">₹ (Budget)</option>
+        <option value="1">₹₹</option>
+        <option value="2">₹₹₹</option>
+        <option value="3">₹₹₹₹</option>
+        <option value="4">₹₹₹₹₹</option>
+      </select>
+      <button id="search-btn">Search</button>
         <span id="status" class="status"></span>
       </section>
 
@@ -172,6 +180,7 @@
     function onSearchClick() {
       const address = document.getElementById('location-input').value.trim();
       const cuisine = document.getElementById('cuisine-select').value;
+      const price = document.getElementById('price-select').value;
       const statusEl = document.getElementById('status');
       const tbody = document.querySelector('#restaurant-table tbody');
       tbody.innerHTML = '';
@@ -196,6 +205,7 @@
     function findTopRated(location, cuisine) {
       const request = { location, radius: 3000, type: 'restaurant' };
       if (cuisine) request.keyword = cuisine;
+      if (price !== '') { request.minPriceLevel = parseInt(price, 10); request.maxPriceLevel = parseInt(price, 10); }
       placesService.nearbySearch(request, (results, status) => {
         const statusEl = document.getElementById('status');
         const tbody = document.querySelector('#restaurant-table tbody');

@@ -40,30 +40,13 @@
     .controls button { background: var(--accent); color: var(--text-light); border: none; cursor: pointer; }
     .controls button:hover { background: var(--primary); }
     .map-layout { display: grid; grid-template-columns: 1fr 360px; gap: 12px; align-items:start; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; background: var(--bg-input); box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: var(--border-radius); overflow: hidden; }
-    th, td { padding: 1rem; text-align: left; vertical-align: top; }
-    thead th { background: var(--primary); color: var(--text-light); font-weight: 600; }
-    tbody tr:nth-child(even) { background: #f9f9f9; }
-    tbody tr:hover { background: #f1f1f1; }
     #map { width: 100%; height: 720px; border-radius: var(--border-radius); }
-    .restaurant-link { color: var(--secondary); text-decoration: none; font-weight: 500; display: block; }
-    .restaurant-link:hover { text-decoration: underline; }
-    .overview { font-size: 0.9rem; margin-top: 0.5rem; color: #555; }
-    a.menu-link { background: var(--secondary); color: var(--text-light); padding: 0.5rem 0.75rem; border-radius: var(--border-radius); text-decoration: none; font-size: 0.9rem; }
-    a.menu-link:hover { background: var(--primary); }
+    .sidebar { background:var(--bg-input); border-radius:8px; padding:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align:left; overflow:auto; max-height:720px; }
+    .sidebar h3 { margin:0 0 8px 0; font-size:16px; color:var(--secondary); }
     .status { display: block; text-align: center; margin-top: 1rem; font-style: italic; }
     .error { color: red; }
     .mode-picker { max-width: 800px; margin: 2rem auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
     .mode-card { background: var(--bg-input); border: 1px solid #e5e5e5; border-radius: 10px; padding: 1.25rem; cursor: pointer; text-align: center; }
-    .route-controls { display:flex; gap:0.6rem; flex-wrap:wrap; justify-content:center; align-items:center; }
-    .stop-header { text-align:left; margin-top:1rem; font-weight:600; color:var(--secondary); }
-    .address-col { width: 15%; }
-    .map-btn { background:var(--primary); color:var(--text-light); border:none; padding:6px 8px; border-radius:6px; cursor:pointer; }
-    .sidebar { background:var(--bg-input); border-radius:8px; padding:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align:left; overflow:auto; max-height:720px; }
-    .sidebar h3 { margin:0 0 8px 0; font-size:16px; color:var(--secondary); }
-    .place-item { padding:10px; border-bottom:1px solid #eee; }
-    .place-item:last-child { border-bottom:none; }
-    .place-name { font-weight:600; color:var(--secondary); cursor:pointer; }
     @media (max-width:980px){ .map-layout { grid-template-columns: 1fr; } #map{height:520px;} .sidebar{max-height:420px;} }
   </style>
 </head>
@@ -119,7 +102,7 @@
             <tr>
               <th>Restaurant</th>
               <th>Rating / Reviews</th>
-              <th class="address-col">Address</th>
+              <th style="width:15%;">Address</th>
               <th>Menu</th>
             </tr>
           </thead>
@@ -145,8 +128,8 @@
       <div class="map-layout">
         <div id="map" role="application" aria-label="Map showing route and restaurants"></div>
         <aside class="sidebar" id="route-sidebar">
-          <h3>Restaurants along route</h3>
-          <div id="places-list">Enter start & end and click "Show on Map".</div>
+          <h3>Route summary</h3>
+          <div id="route-summary">Enter start &amp; end and click "Show on Map".</div>
         </aside>
       </div>
     </div>
@@ -155,7 +138,7 @@
   <script>
     // --- Google Maps / Places wiring ---
     let geocoder, placesService, autocompleteLocation, autocompleteStart, autocompleteEnd;
-    let map, infoWindow, markers = [], directionsService, directionsRenderer, routePolyline = null;
+    let map, infoWindow, markers = [], directionsService, directionsRenderer;
 
     function initMap() {
       const bangaloreBounds = { north: 13.139, south: 12.787, east: 77.736, west: 77.455 };
@@ -163,7 +146,8 @@
       placesService = new google.maps.places.PlacesService(document.createElement('div'));
       infoWindow = new google.maps.InfoWindow();
       directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
+      // show default origin/destination markers by leaving suppressMarkers false
+      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
 
       map = new google.maps.Map(document.getElementById('map'), {
         center: { lat: 12.9716, lng: 77.5946 },
@@ -261,7 +245,7 @@
           tr.innerHTML =
             `<td><a href="javascript:void(0)" class="restaurant-link" onclick="focusMarker(${i})">${place.name}</a><div class="overview"></div></td>` +
             `<td>${place.rating.toFixed(1)}<br>${place.user_ratings_total} reviews</td>` +
-            `<td class="address-col">${place.vicinity || place.formatted_address || ''}</td>` +
+            `<td style="width:15%;">${place.vicinity || place.formatted_address || ''}</td>` +
             `<td><a href="${menuUrl}" class="menu-link" target="_blank">View Menu</a></td>`;
           tbody.appendChild(tr);
           const marker = new google.maps.Marker({ map, position: place.geometry.location, title: place.name });
@@ -291,25 +275,23 @@
     }
 
     // ---------------------------
-    // ROUTE MODE (map-first)
+    // ROUTE MODE (only draw route)
     // ---------------------------
     function resetMapRoute() {
-      markers.forEach(m => m.setMap(null));
-      markers = [];
-      if (routePolyline) { routePolyline.setMap(null); routePolyline = null; }
+      // clear directions shown on the map
       directionsRenderer.set('directions', null);
-      document.getElementById('places-list').innerHTML = 'Enter start & end and click "Show on Map".';
+      document.getElementById('route-summary').textContent = 'Enter start & end and click "Show on Map".';
       document.getElementById('route-status').textContent = '';
       map.setCenter({ lat: 12.9716, lng: 77.5946 });
       map.setZoom(10);
     }
 
-    async function onRouteSearchClick() {
+    function onRouteSearchClick() {
       const start = document.getElementById('route-start').value.trim();
       const end = document.getElementById('route-end').value.trim();
       const statusEl = document.getElementById('route-status');
-      const sidebar = document.getElementById('places-list');
-      sidebar.innerHTML = '';
+      const summaryEl = document.getElementById('route-summary');
+      summaryEl.innerHTML = '';
       statusEl.textContent = '';
       if (!start || !end) {
         statusEl.textContent = 'Please enter both start and end addresses.';
@@ -322,236 +304,51 @@
         destination: end,
         travelMode: google.maps.TravelMode.DRIVING,
         provideRouteAlternatives: false
-      }, async (result, status) => {
+      }, (result, status) => {
         if (status !== 'OK' || !result || !result.routes || !result.routes.length) {
           statusEl.textContent = 'Failed to fetch route. Please check addresses.';
           statusEl.className = 'status error';
           return;
         }
-        // Show route on map
+        // Draw route on map
         directionsRenderer.setDirections(result);
         const route = result.routes[0];
         const leg = (route.legs && route.legs[0]) || null;
         const distanceMeters = leg && leg.distance ? leg.distance.value : null;
-        const distanceKm = distanceMeters ? distanceMeters / 1000.0 : null;
-
-        // compute how many restaurants to show based on your rule:
-        // <=25km -> 5; else 5 + ceil((km - 25)/10)
-        let totalRestaurants = 5;
-        if (distanceKm && distanceKm > 25) {
-          totalRestaurants = 5 + Math.ceil((distanceKm - 25) / 10);
-        }
-
-        // draw an overview polyline (for sampling accuracy, use route.overview_path)
-        if (route.overview_path && route.overview_path.length) {
-          if (routePolyline) { routePolyline.setMap(null); routePolyline = null; }
-          routePolyline = new google.maps.Polyline({ path: route.overview_path, strokeColor: "#6B5B95", strokeOpacity: 0.7, strokeWeight: 5, map });
-        }
-
-        statusEl.textContent = `Route found — ${distanceKm ? distanceKm.toFixed(1) + ' km' : 'distance N/A'}. Selecting ${totalRestaurants} restaurants along the route...`;
-        statusEl.className = 'status';
-
-        // Sample evenly along the path to produce candidate points for nearbySearch
-        const path = route.overview_path.slice(); // array of LatLng
-        if (!path.length) {
-          statusEl.textContent = 'Cannot sample the route path.';
-          statusEl.className = 'status error';
-          return;
-        }
-
-        // get total path length in meters
-        const pathLength = computePathLengthMeters(path);
-        if (!pathLength || pathLength <= 0) {
-          statusEl.textContent = 'Unable to compute route length.';
-          statusEl.className = 'status error';
-          return;
-        }
-
-        // We will compute sample positions at fractions along path to gather candidates.
-        // For robustness, ask nearbySearch around more candidate points than final restaurants (e.g., 2x), then pick top N globally.
-        const candidatePointsCount = Math.max(totalRestaurants * 2, totalRestaurants + 2); // heuristic
-        const candidateDistances = [];
-        for (let i = 1; i <= candidatePointsCount; i++) {
-          const frac = i / (candidatePointsCount + 1);
-          candidateDistances.push(frac * pathLength);
-        }
-        // Convert target distances into LatLng on path
-        const candidatePoints = candidateDistances.map(d => pointAlongPathAtDistance(path, d));
-
-        // Sequentially query nearbySearch for each candidate point to be quota-friendly and deterministic
-        const nearbyRadius = 3500; // meters; you can make this configurable later
-        const allCandidates = []; // will collect unique places
-        const seenPlaceIds = new Set();
-
-        // helper to call nearbySearch as promise
-        function nearbySearchPromise(latLng, radius) {
-          return new Promise((resolve) => {
-            const req = { location: latLng, radius: radius, type: 'restaurant' };
-            placesService.nearbySearch(req, (res, st) => {
-              if (st === google.maps.places.PlacesServiceStatus.OK && res && res.length) resolve(res);
-              else resolve([]); // also handle ZERO_RESULTS, OVER_QUERY_LIMIT etc. gracefully
-            });
-          });
-        }
-
-        // sequential loop
-        for (let i = 0; i < candidatePoints.length; i++) {
-          const pt = candidatePoints[i];
-          if (!pt) continue;
-          try {
-            const res = await nearbySearchPromise(pt, nearbyRadius);
-            // collect candidates (dedup by place_id)
-            (res || []).forEach(p => {
-              if (!p || !p.place_id) return;
-              if (seenPlaceIds.has(p.place_id)) return;
-              seenPlaceIds.add(p.place_id);
-              allCandidates.push({
-                place_id: p.place_id,
-                name: p.name,
-                rating: p.rating || 0,
-                user_ratings_total: p.user_ratings_total || 0,
-                vicinity: p.vicinity || '',
-                location: { lat: p.geometry.location.lat(), lng: p.geometry.location.lng() }
-              });
-            });
-          } catch (e) {
-            console.warn('Nearby search failed for a candidate point', e);
-          }
-        }
-
-        if (!allCandidates.length) {
-          statusEl.textContent = 'No restaurant candidates found along route.';
-          statusEl.className = 'status error';
-          return;
-        }
-
-        // sort global candidates by rating, then by review count
-        allCandidates.sort((a, b) => (b.rating || 0) - (a.rating || 0) || (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
-
-        // pick top totalRestaurants
-        const selected = allCandidates.slice(0, totalRestaurants);
-
-        // Clear previous markers
-        markers.forEach(m => m.setMap(null));
-        markers = [];
-
-        // Add start & end markers (special icons)
-        const legStart = route.legs && route.legs[0] && route.legs[0].start_location;
-        const legEnd = route.legs && route.legs[0] && route.legs[0].end_location;
-        if (legStart) {
-          new google.maps.Marker({ position: legStart, map, title: 'Start', icon: { path: google.maps.SymbolPath.CIRCLE, scale:8, fillColor:'#88B04B', fillOpacity:1, strokeWeight:1 } });
-        }
-        if (legEnd) {
-          new google.maps.Marker({ position: legEnd, map, title: 'End', icon: { path: google.maps.SymbolPath.CIRCLE, scale:8, fillColor:'#FF6F61', fillOpacity:1, strokeWeight:1 } });
-        }
-
-        // Create markers for selected places and sidebar entries
-        const sidebarEl = document.getElementById('places-list');
-        sidebarEl.innerHTML = '';
-        selected.forEach((p, idx) => {
-          const marker = new google.maps.Marker({
-            position: p.location,
-            map,
-            title: p.name,
-            label: `${idx+1}`,
-          });
-          marker.addListener('click', () => {
-            const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${p.location.lat},${p.location.lng}&destination_place_id=${p.place_id}`;
-            const content = `<div style="max-width:220px;"><strong>${escapeHtml(p.name)}</strong><div style="margin-top:6px;">${p.rating ? p.rating.toFixed(1) : 'N/A'} • ${p.user_ratings_total || 0} reviews</div><div style="margin-top:8px;"><a class="menu-link" target="_blank" href="https://www.google.com/maps/search/?api=1&query=menu&query_place_id=${p.place_id}">View Menu</a> <a style="margin-left:6px;" target="_blank" href="${mapsUrl}"><button class="map-btn">Directions</button></a></div></div>`;
-            infoWindow.setContent(content);
-            infoWindow.open(map, marker);
-          });
-          markers.push(marker);
-
-          // sidebar row
-          const div = document.createElement('div');
-          div.className = 'place-item';
-          div.innerHTML = `<div class="place-name" data-idx="${idx}">${idx+1}. ${escapeHtml(p.name)}</div>
-                           <div style="font-size:0.9rem;color:#444;margin-top:6px;">${p.rating ? p.rating.toFixed(1) : 'N/A'} • ${p.user_ratings_total || 0} reviews</div>
-                           <div style="font-size:0.85rem;color:#666;margin-top:6px;">${escapeHtml(p.vicinity)}</div>`;
-          div.querySelector('.place-name').addEventListener('click', () => {
-            map.panTo(p.location);
-            map.setZoom(15);
-            google.maps.event.trigger(marker, 'click');
-          });
-          sidebarEl.appendChild(div);
-        });
-
-        // Fit bounds to show route and selected markers
+        const durationSeconds = leg && leg.duration ? leg.duration.value : null;
+        // Show summary
+        const distanceKm = distanceMeters ? (distanceMeters / 1000).toFixed(1) + ' km' : 'N/A';
+        const durationStr = durationSeconds ? formatDuration(durationSeconds) : 'N/A';
+        summaryEl.innerHTML = `<strong>Distance:</strong> ${distanceKm}<br/><strong>Estimated time:</strong> ${durationStr}`;
+        // Fit map to route
         const bounds = new google.maps.LatLngBounds();
         if (route.overview_path && route.overview_path.length) {
           route.overview_path.forEach(pt => bounds.extend(pt));
+        } else if (leg && leg.steps) {
+          leg.steps.forEach(s => {
+            bounds.extend(s.start_location);
+            bounds.extend(s.end_location);
+          });
         }
-        selected.forEach(s => bounds.extend(new google.maps.LatLng(s.location.lat, s.location.lng)));
         map.fitBounds(bounds, 80);
-
-        statusEl.textContent = `Showing ${selected.length} restaurants for this route.`;
+        statusEl.textContent = `Route drawn.`;
         statusEl.className = 'status';
       });
     }
 
-    // Helpers
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-    }
-
-    function computePathLengthMeters(path) {
-      if (!path || !path.length) return 0;
-      function haversine(a, b) {
-        const R = 6371000;
-        const toRad = Math.PI / 180;
-        const dLat = (b.lat() - a.lat()) * toRad;
-        const dLon = (b.lng() - a.lng()) * toRad;
-        const lat1 = a.lat() * toRad;
-        const lat2 = b.lat() * toRad;
-        const sinDlat = Math.sin(dLat / 2);
-        const sinDlon = Math.sin(dLon / 2);
-        const h = sinDlat * sinDlat + Math.cos(lat1) * Math.cos(lat2) * sinDlon * sinDlon;
-        return 2 * R * Math.asin(Math.sqrt(h));
-      }
-      let sum = 0;
-      for (let i = 1; i < path.length; i++) sum += haversine(path[i-1], path[i]);
-      return sum;
-    }
-
-    function pointAlongPathAtDistance(path, targetDist) {
-      if (!path || path.length === 0) return null;
-      // walk along segments until reach targetDist, interpolate within segment
-      let acc = 0;
-      function haversine(a, b) {
-        const R = 6371000;
-        const toRad = Math.PI / 180;
-        const dLat = (b.lat() - a.lat()) * toRad;
-        const dLon = (b.lng() - a.lng()) * toRad;
-        const lat1 = a.lat() * toRad;
-        const lat2 = b.lat() * toRad;
-        const sinDlat = Math.sin(dLat / 2);
-        const sinDlon = Math.sin(dLon / 2);
-        const h = sinDlat * sinDlat + Math.cos(lat1) * Math.cos(lat2) * sinDlon * sinDlon;
-        return 2 * R * Math.asin(Math.sqrt(h));
-      }
-      for (let i = 1; i < path.length; i++) {
-        const a = path[i-1], b = path[i];
-        const seg = haversine(a, b);
-        if (acc + seg >= targetDist) {
-          const needed = targetDist - acc;
-          const frac = needed / seg;
-          const lat = a.lat() + (b.lat() - a.lat()) * frac;
-          const lng = a.lng() + (b.lng() - a.lng()) * frac;
-          return new google.maps.LatLng(lat, lng);
-        }
-        acc += seg;
-      }
-      // if targetDist exceeds path, return last point
-      return path[path.length - 1];
+    function formatDuration(seconds) {
+      if (!seconds && seconds !== 0) return 'N/A';
+      const hrs = Math.floor(seconds / 3600);
+      const mins = Math.round((seconds % 3600) / 60);
+      if (hrs > 0) return `${hrs} hr ${mins} min`;
+      return `${mins} min`;
     }
 
     // expose callback
     window.initMap = initMap;
   </script>
 
-  <!-- Replace with your key (kept same as original file) -->
+  <!-- Replace YOUR_API_KEY_HERE with your Google Maps JavaScript API key -->
   <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap"></script>
 </body>
 </html>

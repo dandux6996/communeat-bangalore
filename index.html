@@ -40,13 +40,24 @@
     .controls button { background: var(--accent); color: var(--text-light); border: none; cursor: pointer; }
     .controls button:hover { background: var(--primary); }
     .map-layout { display: grid; grid-template-columns: 1fr 360px; gap: 12px; align-items:start; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; background: var(--bg-input); box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: var(--border-radius); overflow: hidden; }
+    th, td { padding: 1rem; text-align: left; vertical-align: top; }
+    thead th { background: var(--primary); color: var(--text-light); font-weight: 600; }
+    tbody tr:nth-child(even) { background: #f9f9f9; }
+    tbody tr:hover { background: #f1f1f1; }
     #map { width: 100%; height: 720px; border-radius: var(--border-radius); }
-    .sidebar { background:var(--bg-input); border-radius:8px; padding:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align:left; overflow:auto; max-height:720px; }
-    .sidebar h3 { margin:0 0 8px 0; font-size:16px; color:var(--secondary); }
+    .restaurant-link { color: var(--secondary); text-decoration: none; font-weight: 500; display: block; }
+    .restaurant-link:hover { text-decoration: underline; }
+    .overview { font-size: 0.9rem; margin-top: 0.5rem; color: #555; }
+    a.menu-link { background: var(--secondary); color: var(--text-light); padding: 0.5rem 0.75rem; border-radius: var(--border-radius); text-decoration: none; font-size: 0.9rem; }
+    a.menu-link:hover { background: var(--primary); }
     .status { display: block; text-align: center; margin-top: 1rem; font-style: italic; }
     .error { color: red; }
     .mode-picker { max-width: 800px; margin: 2rem auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
     .mode-card { background: var(--bg-input); border: 1px solid #e5e5e5; border-radius: 10px; padding: 1.25rem; cursor: pointer; text-align: center; }
+    .route-controls { display:flex; gap:0.6rem; flex-wrap:wrap; justify-content:center; align-items:center; }
+    .sidebar { background:var(--bg-input); border-radius:8px; padding:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align:left; overflow:auto; max-height:720px; }
+    .sidebar h3 { margin:0 0 8px 0; font-size:16px; color:var(--secondary); }
     @media (max-width:980px){ .map-layout { grid-template-columns: 1fr; } #map{height:520px;} .sidebar{max-height:420px;} }
   </style>
 </head>
@@ -69,7 +80,7 @@
       </div>
     </section>
 
-    <!-- Location mode (untouched) -->
+    <!-- Location mode (exactly as before) -->
     <div id="location-mode" class="hidden">
       <section class="controls">
         <input id="location-input" type="text" placeholder="Enter any Bangalore address, locality, street, or pincode" />
@@ -115,7 +126,7 @@
       </section>
     </div>
 
-    <!-- Route mode -->
+    <!-- Route mode: only draws route on map (no restaurants) -->
     <div id="route-mode" class="hidden" style="width:100%;">
       <section class="controls route-controls" style="justify-content:center;">
         <input id="route-start" type="text" placeholder="Start (address or city)" style="min-width:220px;" />
@@ -146,7 +157,7 @@
       placesService = new google.maps.places.PlacesService(document.createElement('div'));
       infoWindow = new google.maps.InfoWindow();
       directionsService = new google.maps.DirectionsService();
-      // show default origin/destination markers by leaving suppressMarkers false
+      // show start/end default markers (suppressMarkers=false)
       directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
 
       map = new google.maps.Map(document.getElementById('map'), {
@@ -196,7 +207,7 @@
     function onSearchClick() {
       const address = document.getElementById('location-input').value.trim();
       const cuisine = document.getElementById('cuisine-select').value;
-      const price = document.getElementById('price-select').value;
+      const price = document.getElementById('price-select').value; // capture price
       const statusEl = document.getElementById('status');
       const tbody = document.querySelector('#restaurant-table tbody');
       tbody.innerHTML = '';
@@ -221,7 +232,11 @@
     function findTopRated(location, cuisine, price) {
       const request = { location, radius: 3000, type: 'restaurant' };
       if (cuisine) request.keyword = cuisine;
-      const selectedPrice = (price !== '' && price !== null && typeof price !== 'undefined') ? parseInt(price, 10) : null;
+
+      // We'll apply price filter client-side (more reliable)
+      const selectedPrice = (price !== '' && price !== null && typeof price !== 'undefined')
+        ? parseInt(price, 10)
+        : null;
 
       placesService.nearbySearch(request, (results, status) => {
         const statusEl = document.getElementById('status');
@@ -231,36 +246,59 @@
           statusEl.className = 'status error';
           return;
         }
+
+        // Clear markers
         markers.forEach(m => m.setMap(null));
         markers = [];
+
+        // Filter & sort
         const filtered = results
-          .filter(r => typeof r.rating === 'number' && (r.user_ratings_total || 0) > 200 && (selectedPrice === null || r.price_level === selectedPrice))
+          .filter(r =>
+            typeof r.rating === 'number' &&
+            (r.user_ratings_total || 0) > 200 &&
+            (selectedPrice === null || r.price_level === selectedPrice)
+          )
           .sort((a, b) => b.rating - a.rating || (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
+
         const top5 = filtered.slice(0, 5);
         map.setCenter(location);
         map.setZoom(14);
+
         top5.forEach((place, i) => {
           const tr = document.createElement('tr');
           const menuUrl = `https://www.google.com/maps/search/?api=1&query=menu&query_place_id=${place.place_id}`;
           tr.innerHTML =
-            `<td><a href="javascript:void(0)" class="restaurant-link" onclick="focusMarker(${i})">${place.name}</a><div class="overview"></div></td>` +
+            `<td><a href="javascript:void(0)" class="restaurant-link" onclick="focusMarker(${i})">${place.name}</a>` +
+            `<div class="overview"></div></td>` +
             `<td>${place.rating.toFixed(1)}<br>${place.user_ratings_total} reviews</td>` +
             `<td style="width:15%;">${place.vicinity || place.formatted_address || ''}</td>` +
             `<td><a href="${menuUrl}" class="menu-link" target="_blank">View Menu</a></td>`;
           tbody.appendChild(tr);
+
+          // Map marker + info window
           const marker = new google.maps.Marker({ map, position: place.geometry.location, title: place.name });
           marker.addListener('click', () => {
             const lat = place.geometry.location.lat(), lng = place.geometry.location.lng();
             const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-            infoWindow.setContent(`<div><strong>${place.name}</strong><br/>${place.rating.toFixed(1)} out of 5<br/><a href="${mapsUrl}" target="_blank"><button class="map-btn">Open in Google Maps</button></a></div>`);
+            infoWindow.setContent(
+              `<div><strong>${place.name}</strong><br/>${place.rating.toFixed(1)} out of 5<br/>` +
+              `<a href="${mapsUrl}" target="_blank"><button class="map-btn">Open in Google Maps</button></a></div>`
+            );
             infoWindow.open(map, marker);
           });
           markers.push(marker);
+
+          // Fetch overview (editorial summary)
           placesService.getDetails({ placeId: place.place_id, fields: ['editorial_summary'] }, (detail, dStatus) => {
             const ovEl = tr.querySelector('.overview');
-            ovEl.textContent = (dStatus === google.maps.places.PlacesServiceStatus.OK && detail.editorial_summary && detail.editorial_summary.overview) ? detail.editorial_summary.overview : '';
+            ovEl.textContent =
+              (dStatus === google.maps.places.PlacesServiceStatus.OK &&
+               detail.editorial_summary && detail.editorial_summary.overview)
+                ? detail.editorial_summary.overview
+                : '';
           });
         });
+
         statusEl.textContent = `Showing top ${top5.length} restaurants by rating with >200 reviews.`;
         statusEl.className = 'status';
       });
@@ -344,11 +382,11 @@
       return `${mins} min`;
     }
 
-    // expose callback
+    // Expose for Google callback
     window.initMap = initMap;
   </script>
 
-  <!-- Replace YOUR_API_KEY_HERE with your Google Maps JavaScript API key -->
+  <!-- Using the same API key you had in earlier files -->
   <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap"></script>
 </body>
 </html>

@@ -1,58 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Commun-EAT-y — Bengaluru → Salem (Route + Restaurants)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#FF6F61">
+  <title>Commun-EAT-y</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     :root {
-      --primary:#FF6F61; --secondary:#6B5B95; --accent:#88B04B;
-      --bg:#fafafa; --card:#fff; --text:#222; --muted:#666;
-      --radius:8px;
+      --primary: #FF6F61;
+      --secondary: #6B5B95;
+      --accent: #88B04B;
+      --text-light: #ffffff;
+      --text-dark: #333333;
+      --bg-light: #fafafa;
+      --bg-input: #ffffff;
+      --border-radius: 6px;
+      --transition: 0.3s;
     }
-    body{font-family:'Poppins',sans-serif;margin:0;background:var(--bg);color:var(--text)}
-    header{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;padding:24px;text-align:center}
-    header h1{margin:0;font-size:24px}
-    main{max-width:1200px;margin:20px auto;padding:16px}
-    .controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
-    .mode-picker{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;max-width:800px;margin:0 auto 16px}
-    .mode-card{background:var(--card);border-radius:10px;padding:14px;border:1px solid #eee;text-align:center;cursor:pointer}
-    .map-layout{display:grid;grid-template-columns:1fr 360px;gap:12px;align-items:start}
-    #map{width:100%;height:680px;border-radius:10px;background:#e9e9e9}
-    .sidebar{background:var(--card);border-radius:10px;padding:12px;box-shadow:0 6px 18px rgba(0,0,0,0.06);max-height:680px;overflow:auto}
-    .sidebar h3{margin:0 0 8px 0;color:var(--secondary)}
-    .place-item{padding:10px;border-bottom:1px solid #f1f1f1}
-    .place-item:last-child{border-bottom:none}
-    .place-name{font-weight:600;color:var(--secondary);cursor:pointer}
-    .status{font-style:italic;text-align:center;margin-top:10px;color:var(--muted)}
-    .diagnostic{background:#fff5f5;border-left:4px solid #ff6f61;padding:8px;margin-top:8px;border-radius:6px;color:#8a1e1e}
-    @media(max-width:980px){ .map-layout{grid-template-columns:1fr} #map{height:480px} .sidebar{max-height:420px} }
+    body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg-light); color: var(--text-dark); }
+    header.banner {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      padding: 2rem 1rem;
+      text-align: center;
+      color: var(--text-light);
+    }
+    header.banner h1 { font-size: 2.5rem; font-weight: 600; margin: 0; }
+    header.banner .tagline { font-size: 1.2rem; font-weight: 300; margin: 0.5rem 0 0; }
+    main.container { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; text-align: center; display:grid; gap:1rem; grid-template-columns: 1fr; }
+    .hidden { display: none; }
+    .controls { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-bottom: 0.75rem; }
+    .controls input, .controls select, .controls button {
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: var(--border-radius);
+    }
+    .controls button { background: var(--accent); color: var(--text-light); border: none; cursor: pointer; }
+    .controls button:hover { background: var(--primary); }
+    .map-layout { display: grid; grid-template-columns: 1fr 360px; gap: 12px; align-items:start; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; background: var(--bg-input); box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: var(--border-radius); overflow: hidden; }
+    th, td { padding: 1rem; text-align: left; vertical-align: top; }
+    thead th { background: var(--primary); color: var(--text-light); font-weight: 600; }
+    tbody tr:nth-child(even) { background: #f9f9f9; }
+    tbody tr:hover { background: #f1f1f1; }
+    #map { width: 100%; height: 720px; border-radius: var(--border-radius); background: #eee; }
+    .restaurant-link { color: var(--secondary); text-decoration: none; font-weight: 500; display: block; }
+    .restaurant-link:hover { text-decoration: underline; }
+    .overview { font-size: 0.9rem; margin-top: 0.5rem; color: #555; }
+    a.menu-link { background: var(--secondary); color: var(--text-light); padding: 0.5rem 0.75rem; border-radius: var(--border-radius); text-decoration: none; font-size: 0.9rem; }
+    a.menu-link:hover { background: var(--primary); }
+    .status { display: block; text-align: center; margin-top: 1rem; font-style: italic; }
+    .error { color: red; }
+    .mode-picker { max-width: 800px; margin: 2rem auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+    .mode-card { background: var(--bg-input); border: 1px solid #e5e5e5; border-radius: 10px; padding: 1.25rem; cursor: pointer; text-align: center; }
+    .route-controls { display:flex; gap:0.6rem; flex-wrap:wrap; justify-content:center; align-items:center; }
+    .sidebar { background:var(--bg-input); border-radius:8px; padding:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align:left; overflow:auto; max-height:720px; }
+    .sidebar h3 { margin:0 0 8px 0; font-size:16px; color:var(--secondary); }
+    .diagnostic { background:#fff5f5; border-left:4px solid #ff6f61; padding:8px; margin-top:8px; border-radius:6px; color:#8a1e1e }
+    @media (max-width:980px){ .map-layout { grid-template-columns: 1fr; } #map{height:520px;} .sidebar{max-height:420px;} }
   </style>
 </head>
 <body>
-  <header>
+  <header class="banner">
     <h1>Commun-EAT-y</h1>
-    <div style="font-weight:300">Fixed route demo — Bengaluru → Salem (restaurants along the way)</div>
+    <p class="tagline">Discover flavor. Share belonging.</p>
   </header>
 
-  <main>
-    <!-- Keep the mode picker / location UI placeholders so Location mode remains untouched -->
-    <section class="mode-picker" id="mode-picker">
-      <div id="pick-location" class="mode-card" role="button" tabindex="0">
+  <main class="container">
+    <!-- Mode picker -->
+    <section id="mode-picker" class="mode-picker">
+      <div id="pick-location" class="mode-card" role="button" tabindex="0" aria-label="Choose Location mode">
         <h2>Location</h2>
-        <p style="margin:6px 0 0">Find top-rated restaurants near a spot in Bangalore.</p>
+        <p>Find top-rated restaurants near a spot in Bangalore.</p>
       </div>
-      <div id="pick-route" class="mode-card" role="button" tabindex="0">
+      <div id="pick-route" class="mode-card" role="button" tabindex="0" aria-label="Choose Route mode">
         <h2>Route</h2>
-        <p style="margin:6px 0 0">Show Bengaluru → Salem route and restaurants (fixed).</p>
+        <p>Plan eats along a route (Bengaluru → Salem demo).</p>
       </div>
     </section>
 
-    <!-- LOCATION MODE: we'll paste your original location-mode HTML block here unchanged -->
+    <!-- Location mode (exact original logic restored) -->
     <div id="location-mode" class="hidden">
-      <!-- exact original controls & table from your working version -->
       <section class="controls">
         <input id="location-input" type="text" placeholder="Enter any Bangalore address, locality, street, or pincode" />
         <select id="cuisine-select" aria-label="Cuisine">
@@ -78,111 +108,268 @@
         <span id="status" class="status"></span>
       </section>
 
-      <section class="results" style="margin-top:12px;">
-        <table id="restaurant-table" style="width:100%;border-collapse:collapse;background:var(--card);border-radius:8px;overflow:hidden;">
-          <thead style="background:var(--primary);color:#fff;font-weight:600;">
-            <tr><th style="padding:12px;text-align:left">Restaurant</th><th style="padding:12px;text-align:left">Rating / Reviews</th><th style="padding:12px;width:18%">Address</th><th style="padding:12px">Menu</th></tr>
+      <section class="results">
+        <table id="restaurant-table">
+          <thead>
+            <tr>
+              <th>Restaurant</th>
+              <th>Rating / Reviews</th>
+              <th style="width:15%;">Address</th>
+              <th>Menu</th>
+            </tr>
           </thead>
           <tbody></tbody>
         </table>
       </section>
+
+      <section class="map-section">
+        <!-- Map will be shown here when Location mode is chosen -->
+        <div id="map" class="hidden" aria-hidden="true"></div>
+      </section>
     </div>
 
-    <!-- ROUTE MODE: fixed Bengaluru -> Salem -->
+    <!-- Route mode: fixed Bengaluru -> Salem (map hidden until user selects Route) -->
     <div id="route-mode" class="hidden" style="width:100%;">
-      <div class="map-layout" style="margin-top:6px;">
-        <div id="map" role="application" aria-label="Map showing route"></div>
-        <aside class="sidebar">
-          <h3>Route summary & restaurants</h3>
-          <div id="route-summary" style="margin-bottom:8px">Click "Route" to display Bengaluru → Salem and the selected restaurants.</div>
-          <div id="places-list">—</div>
-          <div id="diagnostic" style="margin-top:8px"></div>
+      <section class="controls route-controls" style="justify-content:center;">
+        <!-- No inputs (fixed route) -->
+        <button id="route-reset-btn" style="background:#eee;color:#111;border:1px solid #ddd;">Reset Map</button>
+        <span id="route-status" class="status"></span>
+      </section>
+
+      <div class="map-layout">
+        <!-- Reuse same #map element location for route as well -->
+        <div id="map-route-placeholder" class="hidden" aria-hidden="true" style="width:100%;">
+          <!-- map is the same DOM element #map, we show it and reuse it -->
+          <div style="display:none"></div>
+        </div>
+
+        <aside class="sidebar" id="route-sidebar">
+          <h3>Route summary</h3>
+          <div id="route-summary">Choose Route mode to display Bengaluru → Salem.</div>
+          <div id="places-list"></div>
+          <div id="diagnostic"></div>
         </aside>
       </div>
     </div>
   </main>
 
   <script>
-    /*****************************************************************
-     * Behavior summary:
-     * - Location mode remains unchanged and untouched.
-     * - Route mode is fixed: Bengaluru -> Salem.
-     * - On selecting Route mode, the app:
-     *   1) draws directions on the map (DirectionsService + Renderer)
-     *   2) computes distance (km) and determines totalRestaurants:
-     *        total = 5 + Math.floor(distance_km / 15)
-     *   3) samples candidate points along route, queries nearbySearch
-     *   4) dedups & sorts candidates, picks top total restaurants and shows markers + sidebar list
-     *
-     * NOTE: uses the same Google API key you had in earlier files (left in <script> tag).
-     *****************************************************************/
+    // --- Shared map/services variables ---
+    let map, geocoder, placesService, infoWindow, autocompleteLocationInput, directionsService, directionsRenderer, markers = [];
 
-    // Keep variables used by both modes
-    let map, infoWindow, directionsService, directionsRenderer, placesService;
-    let markers = [];
-    let routePolyline = null;
-
-    // Init map and original location-mode services (autocomplete etc)
+    // initialize map and services on load (but keep map element hidden)
     function initMap() {
-      // Services
-      directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
+      geocoder = new google.maps.Geocoder();
       placesService = new google.maps.places.PlacesService(document.createElement('div'));
       infoWindow = new google.maps.InfoWindow();
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: false });
 
-      // Map
+      // create map attached to #map element (even while hidden). We'll resize when showing.
       map = new google.maps.Map(document.getElementById('map'), {
         center: { lat: 12.9716, lng: 77.5946 },
-        zoom: 9,
+        zoom: 12,
         mapTypeControl: false
       });
       directionsRenderer.setMap(map);
 
-      // Set up mode picker behavior (location-mode untouched)
+      // Setup autocomplete for location input (Bangalore bounds, same as original)
+      const bangaloreBounds = { north: 13.139, south: 12.787, east: 77.736, west: 77.455 };
+      const locInput = document.getElementById('location-input');
+      if (locInput) {
+        autocompleteLocationInput = new google.maps.places.Autocomplete(locInput, {
+          bounds: bangaloreBounds,
+          strictBounds: true,
+          types: ['geocode'],
+          componentRestrictions: { country: 'IN' }
+        });
+      }
+
+      // Hook up mode picker but DO NOT show map initially
       const pickLocation = document.getElementById('pick-location');
       const pickRoute = document.getElementById('pick-route');
       const modePicker = document.getElementById('mode-picker');
       const locationMode = document.getElementById('location-mode');
       const routeMode = document.getElementById('route-mode');
+      const mapEl = document.getElementById('map');
 
-      function showLocation() {
+      function showMapAndResize() {
+        // show #map and ensure it renders correctly
+        if (mapEl.classList.contains('hidden')) {
+          mapEl.classList.remove('hidden');
+          mapEl.setAttribute('aria-hidden', 'false');
+        }
+        // trigger resize so Google map redraws properly
+        google.maps.event.trigger(map, 'resize');
+        // re-center to previous center or Bangalore
+        map.setCenter({ lat: 12.9716, lng: 77.5946 });
+      }
+
+      function showLocationMode() {
         modePicker.classList.add('hidden');
         routeMode.classList.add('hidden');
         locationMode.classList.remove('hidden');
+        // show map
+        showMapAndResize();
       }
-      function showRoute() {
+      function showRouteMode() {
         modePicker.classList.add('hidden');
         locationMode.classList.add('hidden');
         routeMode.classList.remove('hidden');
-        // Immediately draw the fixed route
+        // show map
+        showMapAndResize();
+        // draw fixed Bengaluru -> Salem route + restaurants
         drawFixedRouteAndRestaurants();
       }
 
-      pickLocation.addEventListener('click', showLocation);
-      pickLocation.addEventListener('keypress', e => { if (e.key === 'Enter' || e.key === ' ') showLocation(); });
-      pickRoute.addEventListener('click', showRoute);
-      pickRoute.addEventListener('keypress', e => { if (e.key === 'Enter' || e.key === ' ') showRoute(); });
+      pickLocation.addEventListener('click', showLocationMode);
+      pickLocation.addEventListener('keypress', (e)=>{ if(e.key==='Enter' || e.key===' ') showLocationMode(); });
+      pickRoute.addEventListener('click', showRouteMode);
+      pickRoute.addEventListener('keypress', (e)=>{ if(e.key==='Enter' || e.key===' ') showRouteMode(); });
 
-      // Hook existing location search button to your original handler if present (so unchanged)
+      // Hook up location search button to restored handler
       const searchBtn = document.getElementById('search-btn');
       if (searchBtn) searchBtn.addEventListener('click', onSearchClick);
 
-      // basic reset area in sidebar
-      document.getElementById('places-list').innerHTML = '<div class="status">Route not yet drawn.</div>';
+      // Route reset button shows map if hidden and clears overlays
+      const routeResetBtn = document.getElementById('route-reset-btn');
+      if (routeResetBtn) routeResetBtn.addEventListener('click', () => {
+        clearMarkers();
+        directionsRenderer.set('directions', null);
+        document.getElementById('route-summary').textContent = 'Choose Route mode to display Bengaluru → Salem.';
+        document.getElementById('places-list').innerHTML = '';
+      });
     }
 
-    // ---------- Utility helpers ----------
+    // --------------------------
+    // Restore original Location mode functions (exact logic)
+    // --------------------------
+    function onSearchClick() {
+      const address = document.getElementById('location-input').value.trim();
+      const cuisine = document.getElementById('cuisine-select').value;
+      const price = document.getElementById('price-select').value; // capture price
+      const statusEl = document.getElementById('status');
+      const tbody = document.querySelector('#restaurant-table tbody');
+      tbody.innerHTML = '';
+      statusEl.textContent = '';
+      if (!address) {
+        statusEl.textContent = 'Please enter a location.';
+        statusEl.className = 'status error';
+        return;
+      }
+      statusEl.textContent = 'Geocoding...';
+      geocoder.geocode({ address }, (results, geocodeStatus) => {
+        if (geocodeStatus !== 'OK' || !results || !results[0]) {
+          statusEl.textContent = 'Could not find that location.';
+          statusEl.className = 'status error';
+          return;
+        }
+        statusEl.textContent = 'Searching for top-rated restaurants with >200 reviews...';
+        // pass price to finder
+        findTopRated(results[0].geometry.location, cuisine, price);
+      });
+    }
+
+    function findTopRated(location, cuisine, price) {
+      const request = { location, radius: 3000, type: 'restaurant' };
+      if (cuisine) request.keyword = cuisine;
+
+      const selectedPrice = (price !== '' && price !== null && typeof price !== 'undefined')
+        ? parseInt(price, 10)
+        : null;
+
+      placesService.nearbySearch(request, (results, status) => {
+        const statusEl = document.getElementById('status');
+        const tbody = document.querySelector('#restaurant-table tbody');
+        if (status !== 'OK' || !results || !results.length) {
+          statusEl.textContent = 'No restaurants found.';
+          statusEl.className = 'status error';
+          return;
+        }
+
+        // Clear markers
+        markers.forEach(m => m.setMap(null));
+        markers = [];
+
+        // Filter & sort (same criteria: rating present, >200 reviews, price filter)
+        const filtered = results
+          .filter(r =>
+            typeof r.rating === 'number' &&
+            (r.user_ratings_total || 0) > 200 &&
+            (selectedPrice === null || r.price_level === selectedPrice)
+          )
+          .sort((a, b) => b.rating - a.rating || (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
+
+        const top5 = filtered.slice(0, 5);
+
+        // Ensure map is visible and resized (in case user opens location mode)
+        const mapEl = document.getElementById('map');
+        if (mapEl.classList.contains('hidden')) {
+          mapEl.classList.remove('hidden');
+          mapEl.setAttribute('aria-hidden', 'false');
+          google.maps.event.trigger(map, 'resize');
+        }
+
+        map.setCenter(location);
+        map.setZoom(14);
+
+        top5.forEach((place, i) => {
+          const tr = document.createElement('tr');
+          const menuUrl = `https://www.google.com/maps/search/?api=1&query=menu&query_place_id=${place.place_id}`;
+          tr.innerHTML =
+            `<td><a href="javascript:void(0)" class="restaurant-link" onclick="focusMarker(${i})">${place.name}</a>` +
+            `<div class="overview"></div></td>` +
+            `<td>${place.rating.toFixed(1)}<br>${place.user_ratings_total} reviews</td>` +
+            `<td style="width:15%;">${place.vicinity || place.formatted_address || ''}</td>` +
+            `<td><a href="${menuUrl}" class="menu-link" target="_blank">View Menu</a></td>`;
+          tbody.appendChild(tr);
+
+          // Map marker + info window
+          const marker = new google.maps.Marker({ map, position: place.geometry.location, title: place.name });
+          marker.addListener('click', () => {
+            const lat = place.geometry.location.lat(), lng = place.geometry.location.lng();
+            const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+            infoWindow.setContent(
+              `<div><strong>${place.name}</strong><br/>${place.rating.toFixed(1)} out of 5<br/>` +
+              `<a href="${mapsUrl}" target="_blank"><button class="map-btn">Open in Google Maps</button></a></div>`
+            );
+            infoWindow.open(map, marker);
+          });
+          markers.push(marker);
+
+          // Fetch overview (editorial summary) non-blocking
+          placesService.getDetails({ placeId: place.place_id, fields: ['editorial_summary'] }, (detail, dStatus) => {
+            const ovEl = tr.querySelector('.overview');
+            ovEl.textContent =
+              (dStatus === google.maps.places.PlacesServiceStatus.OK &&
+               detail.editorial_summary && detail.editorial_summary.overview)
+                ? detail.editorial_summary.overview
+                : '';
+          });
+        });
+
+        statusEl.textContent = `Showing top ${top5.length} restaurants by rating with >200 reviews.`;
+        statusEl.className = 'status';
+      });
+    }
+
+    function focusMarker(index) {
+      const marker = markers[index];
+      if (!marker) return;
+      map.panTo(marker.getPosition());
+      map.setZoom(16);
+      google.maps.event.trigger(marker, 'click');
+    }
+
+    // --------------------------
+    // Route mode: fixed Bengaluru -> Salem (map shown only when route mode chosen)
+    // --------------------------
     function clearMarkers() {
       markers.forEach(m => m.setMap(null));
       markers = [];
     }
-    function showDiagnostic(msg, isError = false) {
-      const c = document.getElementById('diagnostic');
-      c.innerHTML = `<div class="diagnostic">${isError ? '<strong style="color:#8a1e1e">Error:</strong> ' : ''}${msg}</div>`;
-    }
-    function clearDiagnostic() { document.getElementById('diagnostic').innerHTML = ''; }
 
-    // compute haversine meters for two LatLng-like {lat,lng}
+    // compute haversine distance (meters)
     function haversineMeters(a, b) {
       const R = 6371000;
       const toRad = Math.PI / 180;
@@ -195,8 +382,6 @@
       const h = sinDlat * sinDlat + Math.cos(lat1) * Math.cos(lat2) * sinDlon * sinDlon;
       return 2 * R * Math.asin(Math.sqrt(h));
     }
-
-    // compute full path length in meters for an array of google.maps.LatLng-like objects
     function computePathLengthMeters(path) {
       if (!path || path.length < 2) return 0;
       let sum = 0;
@@ -207,8 +392,6 @@
       }
       return sum;
     }
-
-    // find LatLng at a specific distance along path (meters)
     function pointAlongPathAtDistance(path, targetDist) {
       if (!path || path.length === 0) return null;
       let acc = 0;
@@ -226,23 +409,21 @@
       }
       return path[path.length - 1];
     }
-
-    // nearbySearch as promise
     function nearbySearchPromise(latLng, radius) {
       return new Promise((resolve) => {
         const req = { location: latLng, radius: radius, type: 'restaurant' };
         placesService.nearbySearch(req, (res, status) => {
           if (status === google.maps.places.PlacesServiceStatus.OK && res) resolve(res);
-          else resolve([]); // handle ZERO_RESULTS, OVER_QUERY_LIMIT gracefully
+          else resolve([]); // be graceful
         });
       });
     }
 
-    // ---------- Core: draw fixed route and fetch restaurants ----------
     async function drawFixedRouteAndRestaurants() {
+      document.getElementById('route-summary').textContent = 'Drawing route...';
       clearDiagnostic();
       clearMarkers();
-      document.getElementById('places-list').innerHTML = '<div class="status">Drawing Bengaluru → Salem route...</div>';
+      directionsRenderer.set('directions', null);
 
       const start = 'Bengaluru, Karnataka, India';
       const end = 'Salem, Tamil Nadu, India';
@@ -254,36 +435,34 @@
         provideRouteAlternatives: false
       }, async (result, status) => {
         if (status !== 'OK' || !result || !result.routes || !result.routes.length) {
-          showDiagnostic('Failed to fetch route. Directions status: ' + status, true);
-          document.getElementById('places-list').innerHTML = `<div class="status error">Route fetch failed: ${status}</div>`;
+          document.getElementById('route-summary').textContent = 'Route fetch failed: ' + status;
+          showDiagnostic('Directions error: ' + status, true);
           return;
         }
 
-        // show route on map
         directionsRenderer.setDirections(result);
         const route = result.routes[0];
-        const leg = (route.legs && route.legs[0]) || null;
+        const leg = route.legs && route.legs[0];
         const distanceMeters = leg && leg.distance ? leg.distance.value : null;
         const distanceKm = distanceMeters ? (distanceMeters / 1000.0) : null;
 
-        // apply your rule: minimum 5, plus 1 per each 15 km (floor)
+        // rule: minimum 5 + 1 for every 15 km (floor)
         let extra = 0;
         if (distanceKm && distanceKm > 0) extra = Math.floor(distanceKm / 15);
         const totalRestaurants = 5 + extra;
 
-        // show summary
-        const summaryEl = document.getElementById('route-summary');
-        summaryEl.innerHTML = `<strong>Route:</strong> Bengaluru → Salem<br/><strong>Distance:</strong> ${distanceKm ? distanceKm.toFixed(1) + ' km' : 'N/A'}<br/><strong>Showing restaurants:</strong> ${totalRestaurants}`;
+        document.getElementById('route-summary').innerHTML =
+          `<strong>Route:</strong> Bengaluru → Salem<br/><strong>Distance:</strong> ${distanceKm ? distanceKm.toFixed(1)+' km' : 'N/A'}<br/><strong>Restaurants to show:</strong> ${totalRestaurants}`;
 
-        // sample candidate points: pick candidateCount = totalRestaurants * 3 for variety
-        const path = route.overview_path; // array of LatLng
+        // sample candidate points (3x heuristic)
+        const path = route.overview_path;
         if (!path || path.length < 2) {
-          showDiagnostic('Route path is not available.', true);
+          showDiagnostic('No overview_path to sample.', true);
           return;
         }
         const pathLen = computePathLengthMeters(path);
-        if (!pathLen || pathLen <= 0) {
-          showDiagnostic('Could not compute route length.', true);
+        if (!pathLen) {
+          showDiagnostic('Could not compute path length.', true);
           return;
         }
 
@@ -295,8 +474,7 @@
         }
         const candidatePoints = candidateDistances.map(d => pointAlongPathAtDistance(path, d));
 
-        // sequentially query nearbySearch around each candidate point
-        const nearbyRadius = 3500; // meters (same default you used earlier)
+        const nearbyRadius = 3500; // default
         const allCandidates = [];
         const seen = new Set();
 
@@ -319,30 +497,25 @@
               });
             });
           } catch (e) {
-            console.warn('nearbySearch failed for a candidate', e);
+            console.warn('nearbySearch failed for candidate', e);
           }
         }
 
         if (!allCandidates.length) {
-          document.getElementById('places-list').innerHTML = `<div class="status error">No restaurant candidates found along route.</div>`;
+          document.getElementById('places-list').innerHTML = `<div class="status error">No restaurants found along route.</div>`;
           return;
         }
 
-        // sort by rating and reviews
+        // sort & pick top N
         allCandidates.sort((a,b) => (b.rating || 0) - (a.rating || 0) || (b.user_ratings_total || 0) - (a.user_ratings_total || 0));
-
         const selected = allCandidates.slice(0, totalRestaurants);
 
-        // place markers and build sidebar
-        clearMarkers();
+        // place markers + sidebar
         const listEl = document.getElementById('places-list');
         listEl.innerHTML = '';
         selected.forEach((p, idx) => {
           const marker = new google.maps.Marker({
-            position: p.location,
-            map,
-            title: p.name,
-            label: `${idx+1}`
+            map, position: p.location, title: p.name, label: `${idx+1}`
           });
           marker.addListener('click', () => {
             infoWindow.setContent(`<div style="max-width:220px;"><strong>${escapeHtml(p.name)}</strong><div style="margin-top:6px;">${p.rating ? p.rating.toFixed(1) : 'N/A'} • ${p.user_ratings_total || 0} reviews</div><div style="margin-top:8px;"><a class="menu-link" target="_blank" href="https://www.google.com/maps/search/?api=1&query=menu&query_place_id=${p.place_id}">View Menu</a></div></div>`);
@@ -353,7 +526,7 @@
           const div = document.createElement('div');
           div.className = 'place-item';
           div.innerHTML = `<div class="place-name" data-idx="${idx}">${idx+1}. ${escapeHtml(p.name)}</div>
-                           <div style="font-size:0.9rem;color:var(--muted);margin-top:6px;">${p.rating ? p.rating.toFixed(1) : 'N/A'} • ${p.user_ratings_total || 0} reviews</div>
+                           <div style="font-size:0.9rem;color:#666;margin-top:6px;">${p.rating ? p.rating.toFixed(1) : 'N/A'} • ${p.user_ratings_total || 0} reviews</div>
                            <div style="font-size:0.85rem;color:#666;margin-top:6px;">${escapeHtml(p.vicinity)}</div>`;
           div.querySelector('.place-name').addEventListener('click', () => {
             map.panTo(p.location);
@@ -363,13 +536,12 @@
           listEl.appendChild(div);
         });
 
-        // fit bounds to show route and markers
+        // fit bounds
         const bounds = new google.maps.LatLngBounds();
         path.forEach(pt => bounds.extend(pt));
         selected.forEach(s => bounds.extend(new google.maps.LatLng(s.location.lat, s.location.lng)));
         map.fitBounds(bounds, 80);
 
-        // final status
         clearDiagnostic();
       });
     }
@@ -379,91 +551,17 @@
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
-    // ---------- Minimal Location-mode handlers to keep your original code intact ----------
-    // The functions below are kept minimal and identical behaviour-wise to your working version
-    // so the location mode is not disturbed. If your original file had other helper code,
-    // it remains unaffected in this integration context.
-
-    function onSearchClick() {
-      // replicate your earlier location-mode behaviour: geocode -> nearbySearch -> top 5
-      const address = document.getElementById('location-input').value.trim();
-      const cuisine = document.getElementById('cuisine-select').value;
-      const price = document.getElementById('price-select').value;
-      const statusEl = document.getElementById('status');
-      const tbody = document.querySelector('#restaurant-table tbody');
-      tbody.innerHTML = '';
-      statusEl.textContent = '';
-      if (!address) {
-        statusEl.textContent = 'Please enter a location.';
-        statusEl.className = 'status error';
-        return;
-      }
-      statusEl.textContent = 'Geocoding...';
-      const geocoder = new google.maps.Geocoder();
-      geocoder.geocode({ address }, (results, geocodeStatus) => {
-        if (geocodeStatus !== 'OK' || !results || !results[0]) {
-          statusEl.textContent = 'Could not find that location.';
-          statusEl.className = 'status error';
-          return;
-        }
-        statusEl.textContent = 'Searching for top-rated restaurants with >200 reviews...';
-        const location = results[0].geometry.location;
-        const req = { location, radius: 3000, type: 'restaurant' };
-        if (cuisine) req.keyword = cuisine;
-        placesService.nearbySearch(req, (resultsArr, status) => {
-          if (status !== google.maps.places.PlacesServiceStatus.OK || !resultsArr || !resultsArr.length) {
-            statusEl.textContent = 'No restaurants found.';
-            statusEl.className = 'status error';
-            return;
-          }
-          clearMarkers();
-          const filtered = resultsArr.filter(r => typeof r.rating === 'number' && (r.user_ratings_total || 0) > 200)
-                                     .sort((a,b) => b.rating - a.rating || (b.user_ratings_total||0)-(a.user_ratings_total||0));
-          const top5 = filtered.slice(0,5);
-          map.setCenter(location);
-          map.setZoom(14);
-          top5.forEach((place,i) => {
-            const tr = document.createElement('tr');
-            const menuUrl = `https://www.google.com/maps/search/?api=1&query=menu&query_place_id=${place.place_id}`;
-            tr.innerHTML = `<td><a href="javascript:void(0)" class="restaurant-link" onclick="focusMarker(${i})">${place.name}</a><div class="overview"></div></td>
-                            <td>${place.rating.toFixed(1)}<br/>${place.user_ratings_total} reviews</td>
-                            <td style="width:18%">${place.vicinity||''}</td>
-                            <td><a href="${menuUrl}" class="menu-link" target="_blank">View Menu</a></td>`;
-            tbody.appendChild(tr);
-            const marker = new google.maps.Marker({ map, position: place.geometry.location, title: place.name });
-            marker.addListener('click', () => {
-              const lat = place.geometry.location.lat(), lng = place.geometry.location.lng();
-              infoWindow.setContent(`<div><strong>${place.name}</strong><br/>${place.rating.toFixed(1)} out of 5<br/><a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank"><button class="map-btn">Open in Google Maps</button></a></div>`);
-              infoWindow.open(map, marker);
-            });
-            markers.push(marker);
-            // editorial summary fetch (non-blocking)
-            placesService.getDetails({ placeId: place.place_id, fields: ['editorial_summary'] }, (detail, dStatus) => {
-              const ov = tr.querySelector('.overview');
-              if (dStatus === google.maps.places.PlacesServiceStatus.OK && detail.editorial_summary && detail.editorial_summary.overview) {
-                ov.textContent = detail.editorial_summary.overview;
-              }
-            });
-          });
-          statusEl.textContent = `Showing top ${top5.length} restaurants by rating with >200 reviews.`;
-          statusEl.className = 'status';
-        });
-      });
+    function showDiagnostic(msg, isError=false) {
+      const el = document.getElementById('diagnostic');
+      el.innerHTML = `<div class="diagnostic">${isError?'<strong style="color:#8a1e1e">Error:</strong> ':''}${msg}</div>`;
     }
+    function clearDiagnostic() { document.getElementById('diagnostic').innerHTML = ''; }
 
-    function focusMarker(i) {
-      if (!markers[i]) return;
-      map.panTo(markers[i].getPosition());
-      map.setZoom(16);
-      google.maps.event.trigger(markers[i], 'click');
-    }
-
-    // Expose for Google callback
+    // Expose initMap to Google callback
     window.initMap = initMap;
-
   </script>
 
-  <!-- Using the same API key that was in your earlier files -->
-  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap" onerror="document.getElementById('diagnostic').innerText='Google Maps script failed to load. Check API key/billing/referrers.'"></script>
+  <!-- Using your earlier API key (left intact) -->
+  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDqKeq3a0O__Mm7EQLy0zrHYuJUq8Ly1Ps&libraries=places&callback=initMap"></script>
 </body>
 </html>
